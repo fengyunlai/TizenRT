@@ -78,7 +78,8 @@
 #endif
 #include <tinyara/binfmt/binfmt.h>
 #endif
-
+#undef CONFIG_NSOCKET_DESCRIPTORS
+#define CONFIG_NSOCKET_DESCRIPTORS 0
 #ifdef HAVE_TASK_GROUP
 
 /*****************************************************************************

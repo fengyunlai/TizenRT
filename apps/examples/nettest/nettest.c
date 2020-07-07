@@ -386,11 +386,11 @@ void ipmcast_sender_thread(int num_packets, uint32_t sleep_time, const char *int
 	 * The IP address specified must be associated with a local,
 	 * multicast-capable interface.
 	 */
-	ret = netlib_get_ipv4addr(intf, &localInterface);
-	if (ret == -1) {
-		printf("[MCASTCLIENT] fail to get interface's ip address\n");
-		goto out_with_socket;
-	}
+	//ret = netlib_get_ipv4addr(intf, &localInterface);
+	//if (ret == -1) {
+	//	printf("[MCASTCLIENT] fail to get interface's ip address\n");
+	//	goto out_with_socket;
+	//}
 	printf("[MCASTCLIENT] bind interface(%s)\n", intf);
 	printf("[MCASTCLIENT] group address(%s)\n", g_app_target_addr);
 	printf("[MCASTCLIENT] port(%d)\n", g_app_target_port);
@@ -471,6 +471,13 @@ void ipmcast_receiver_thread(int num_packets, const char *intf)
 	localSock.sin_port = htons(g_app_target_port);
 	localSock.sin_addr.s_addr = INADDR_ANY;
 
+	group.imr_interface.s_addr = INADDR_ANY;
+	group.imr_multiaddr.s_addr = inet_addr(g_app_target_addr);
+		if (setsockopt(sd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&group, sizeof(group)) < 0) {
+			printf("[MCASTSERV] fail: adding multicast group %d\n", errno);
+			goto out_with_socket;
+		}
+		
 	if (bind(sd, (struct sockaddr *)&localSock, sizeof(localSock))) {
 		printf("[MCASTSERV] ERR: binding datagram socket\n");
 		goto out_with_socket;
@@ -493,12 +500,6 @@ void ipmcast_receiver_thread(int num_packets, const char *intf)
 	printf("[MCASTSERV] bind interface(%s)\n", intf);
 	printf("[MCASTSERV] group address(%s)\n", g_app_target_addr);
 	printf("[MCASTSERV] port(%d)\n", g_app_target_port);
-
-	group.imr_multiaddr.s_addr = inet_addr(g_app_target_addr);
-	if (setsockopt(sd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&group, sizeof(group)) < 0) {
-		printf("[MCASTSERV] fail: adding multicast group %d\n", errno);
-		goto out_with_socket;
-	}
 
 	printf("[MCASTSERV] join multicast success\n");
 	/*
@@ -929,3 +930,4 @@ err_with_input:
 	show_usage();
 	return -1;
 }
+

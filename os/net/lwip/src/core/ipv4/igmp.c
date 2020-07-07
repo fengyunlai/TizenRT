@@ -453,27 +453,33 @@ err_t igmp_joingroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
 {
 	err_t err = ERR_VAL;		/* no matching interface */
 	struct netif *netif;
-
+printf("FENG 1\n");
 	/* make sure it is multicast address */
 	LWIP_ERROR("igmp_joingroup: attempt to join non-multicast address", ip4_addr_ismulticast(groupaddr), return ERR_VAL;);
+printf("FENG 2\n");
 	LWIP_ERROR("igmp_joingroup: attempt to join allsystems address", (!ip4_addr_cmp(groupaddr, &allsystems)), return ERR_VAL;);
-
+printf("FENG 3\n");
 	/* loop through netif's */
 	netif = netif_list;
 	while (netif != NULL) {
+printf("FENG 4\n");
 		/* Should we join this interface ? */
+printf("FENG netif->flags: 0x%x, (*(ifaddr)).addr: 0x%x, (netif_ip4_addr(netif))->addr: 0x%x, ifaddr->addr: 0x%x\n",netif->flags,(*(ifaddr)).addr,(netif_ip4_addr(netif))->addr, ifaddr->addr);
 		if ((netif->flags & NETIF_FLAG_IGMP) && ((ip4_addr_isany(ifaddr) || ip4_addr_cmp(netif_ip4_addr(netif), ifaddr)))) {
+printf("FENG 5\n");
 			err = igmp_joingroup_netif(netif, groupaddr);
 			if (err != ERR_OK) {
+printf("FENG 6\n");
 				/* Return an error even if some network interfaces are joined */
 				/** @todo undo any other netif already joined */
 				return err;
 			}
 		}
+printf("FENG 7\n");
 		/* proceed to next network interface */
 		netif = netif->next;
 	}
-
+printf("FENG 8\n");
 	return err;
 }
 
@@ -488,35 +494,40 @@ err_t igmp_joingroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
 err_t igmp_joingroup_netif(struct netif *netif, const ip4_addr_t *groupaddr)
 {
 	struct igmp_group *group;
-
+printf("FENG 5.1\n");
 	/* make sure it is multicast address */
 	LWIP_ERROR("igmp_joingroup_netif: attempt to join non-multicast address", ip4_addr_ismulticast(groupaddr), return ERR_VAL;);
+printf("FENG 5.2\n");
 	LWIP_ERROR("igmp_joingroup_netif: attempt to join allsystems address", (!ip4_addr_cmp(groupaddr, &allsystems)), return ERR_VAL;);
-
+printf("FENG 5.3\n");
 	/* make sure it is an igmp-enabled netif */
 	LWIP_ERROR("igmp_joingroup_netif: attempt to join on non-IGMP netif", netif->flags & NETIF_FLAG_IGMP, return ERR_VAL;);
-
+printf("FENG 5.4\n");
 	/* find group or create a new one if not found */
 	group = igmp_lookup_group(netif, groupaddr);
-
+printf("FENG 5.5\n");
 	if (group != NULL) {
 		/* This should create a new group, check the state to make sure */
+printf("FENG 5.6\n");
 		if (group->group_state != IGMP_GROUP_NON_MEMBER) {
+printf("FENG 5.7\n");
 			LWIP_DEBUGF(IGMP_DEBUG, ("igmp_joingroup_netif: join to group not in state IGMP_GROUP_NON_MEMBER\n"));
 		} else {
+printf("FENG 5.8\n");
 			/* OK - it was new group */
 			LWIP_DEBUGF(IGMP_DEBUG, ("igmp_joingroup_netif: join to new group: "));
 			ip4_addr_debug_print(IGMP_DEBUG, groupaddr);
 			LWIP_DEBUGF(IGMP_DEBUG, ("\n"));
-
+printf("FENG 5.9\n");
 			/* If first use of the group, allow the group at the MAC level */
 			if ((group->use == 0) && (netif->igmp_mac_filter != NULL)) {
+printf("FENG 5.10\n");
 				LWIP_DEBUGF(IGMP_DEBUG, ("igmp_joingroup_netif: igmp_mac_filter(ADD "));
 				ip4_addr_debug_print(IGMP_DEBUG, groupaddr);
 				LWIP_DEBUGF(IGMP_DEBUG, (") on if %p\n", (void *)netif));
 				netif->igmp_mac_filter(netif, groupaddr, NETIF_ADD_MAC_FILTER);
 			}
-
+printf("FENG 5.11\n");
 			IGMP_STATS_INC(igmp.tx_join);
 			igmp_send(netif, group, IGMP_V2_MEMB_REPORT);
 
@@ -525,12 +536,15 @@ err_t igmp_joingroup_netif(struct netif *netif, const ip4_addr_t *groupaddr)
 			/* Need to work out where this timer comes from */
 			group->group_state = IGMP_GROUP_DELAYING_MEMBER;
 		}
+printf("FENG 5.12\n");
 		/* Increment group use */
 		group->use++;
 		/* Join on this interface */
 		return ERR_OK;
 	} else {
+printf("FENG 5.13\n");
 		LWIP_DEBUGF(IGMP_DEBUG, ("igmp_joingroup_netif: Not enough memory to join to group\n"));
+printf("FENG 5.14\n");
 		return ERR_MEM;
 	}
 }

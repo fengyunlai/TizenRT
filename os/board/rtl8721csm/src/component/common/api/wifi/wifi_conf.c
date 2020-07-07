@@ -721,6 +721,14 @@ int wifi_connect(
 			}
 			if(wifi_is_connected_to_ap( ) != RTW_SUCCESS) {
 				result = RTW_ERROR;
+				memset(&reason, 0, sizeof(rtk_reason_t));
+				reason.reason_code = RTK_STATUS_ERROR;
+				if (g_link_up) {
+					if (reason.reason_code)
+						ndbg("reason.reason_code=%d\n", reason.reason_code);
+					ndbg("RTK_API %s() send link_up\n", __func__);
+					g_link_up(&reason);
+				}
 				goto error;
 			}
 				memset(&reason, 0, sizeof(rtk_reason_t));
@@ -2346,7 +2354,7 @@ struct wifi_autoreconnect_param {
 	int key_id;
 };
 
-#if defined(CONFIG_MBED_ENABLED) || defined(CONFIG_PLATFOMR_CUSTOMER_RTOS) || defined(CONFIG_PLATFORM_TIZENRT_OS)
+#if 0
 void wifi_autoreconnect_hdl(rtw_security_t security_type,
                             char *ssid, int ssid_len,
                             char *password, int password_len,
@@ -2387,7 +2395,7 @@ static void wifi_autoreconnect_thread(void *param)
 		}
 	}
 #endif //#if CONFIG_LWIP_LAYER
-	vTaskDelete(NULL);
+	task_delete(0);
 }
 
 void wifi_autoreconnect_hdl(rtw_security_t security_type,
@@ -2402,7 +2410,13 @@ void wifi_autoreconnect_hdl(rtw_security_t security_type,
 	param.password = password;
 	param.password_len = password_len;
 	param.key_id = key_id;
-	xTaskCreate(wifi_autoreconnect_thread, (const char *)"wifi_autoreconnect", 512, &param, tskIDLE_PRIORITY + 1, NULL);
+
+	int tid = task_create("wifi_autoreconnect", 100, 512, (main_t)wifi_autoreconnect_thread, &param);
+	if (tid < 0) {
+		return -1;
+	}
+
+	//xTaskCreate(wifi_autoreconnect_thread, (const char *)"wifi_autoreconnect", 512, &param, tskIDLE_PRIORITY + 1, NULL);
 }
 #endif
 

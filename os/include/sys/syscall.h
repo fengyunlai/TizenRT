@@ -63,7 +63,8 @@
 #ifndef __ASSEMBLY__
 #include <stdint.h>
 #endif
-
+#undef CONFIG_NSOCKET_DESCRIPTORS
+#define CONFIG_NSOCKET_DESCRIPTORS 0
 #ifdef CONFIG_LIB_SYSCALL
 
 /****************************************************************************

@@ -91,7 +91,8 @@ extern "C" {
  ****************************************************************************/
 
 /* netdev_register.c *********************************************************/
-
+#undef CONFIG_NSOCKET_DESCRIPTORS
+#define CONFIG_NSOCKET_DESCRIPTORS 0
 #if CONFIG_NSOCKET_DESCRIPTORS > 0
 void netdev_seminit(void);
 void netdev_semtake(void);

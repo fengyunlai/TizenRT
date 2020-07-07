@@ -150,6 +150,18 @@ static void nic_display_state(void)
 			} else {
 				printf("RUNNING: %s\n", (ifr->ifr_flags & IFF_UP) ? "UP" : "DOWN");
 			}
+
+			ifr->ifr_flags |= IFF_UP;
+
+			ret = ioctl(fd, SIOCSIFFLAGS, (unsigned long)ifr);
+
+			ret = ioctl(fd, SIOCGIFFLAGS, (unsigned long)ifr);
+			if (ret < 0) {
+				ndbg("fail %s:%d\n", __FUNCTION__, __LINE__);
+			} else {
+				printf("RUNNING: %s\n", (ifr->ifr_flags & IFF_UP) ? "UP" : "DOWN");
+			}
+
 		}
 		printf("\tinet addr: %s\t", inet_ntoa(sin->sin_addr));
 

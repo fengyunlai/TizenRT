@@ -67,7 +67,8 @@
 #include <tinyara/net/net.h>
 
 #include "group/group.h"
-
+#undef CONFIG_NSOCKET_DESCRIPTORS
+#define CONFIG_NSOCKET_DESCRIPTORS 0
 #if CONFIG_NFILE_DESCRIPTORS > 0 || CONFIG_NSOCKET_DESCRIPTORS > 0
 
 /****************************************************************************

@@ -1110,10 +1110,10 @@ VOID VectorTableOverride(VOID)
 	int i;
 	for(i=3;i<MAX_VECTOR_TABLE_NUM;i++)
 		NewVectorTable[i] = exception_common;
-	//NewVectorTable[AMEBAD_IRQ_HARDFAULT] = (HAL_VECTOR_FUN)HardFault_Handler_ram;
-	//NewVectorTable[AMEBAD_IRQ_MEMFAULT] = (HAL_VECTOR_FUN)MemManage_Handler_ram;
-	//NewVectorTable[AMEBAD_IRQ_BUSFAULT] = (HAL_VECTOR_FUN)BusFault_Handler_ram;
-	//NewVectorTable[AMEBAD_IRQ_USAGEFAULT] = (HAL_VECTOR_FUN)UsageFault_Handler_ram;
+	NewVectorTable[AMEBAD_IRQ_HARDFAULT] = (HAL_VECTOR_FUN)HardFault_Handler_ram;
+	NewVectorTable[AMEBAD_IRQ_MEMFAULT] = (HAL_VECTOR_FUN)MemManage_Handler_ram;
+	NewVectorTable[AMEBAD_IRQ_BUSFAULT] = (HAL_VECTOR_FUN)BusFault_Handler_ram;
+	NewVectorTable[AMEBAD_IRQ_USAGEFAULT] = (HAL_VECTOR_FUN)UsageFault_Handler_ram;
 	NewVectorTable[7] = (HAL_VECTOR_FUN)SecureFault_Handler_ram;
 #ifdef CONFIG_AMEBAD_TRUSTZONE
 	NewVectorTable[AMEBAD_IRQ_SVCALL] = (HAL_VECTOR_FUN)exception_common_svc;

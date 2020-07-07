@@ -845,7 +845,19 @@ void cmd_wifi_info(int argc, char **argv)
  * Wi-Fi manager does it.
  */
 #include <net/if.h>
+#ifdef CONFIG_NET_NETMGR
+FAR struct netif *netdev_findbyname(const char *ifname)
+{
+	struct netif *dev;
+	if (ifname) {
+		dev = netif_find((char *)ifname);
+		return dev;
+	}
+	return NULL;
+}
+#else
 extern struct netif *netdev_findbyname(FAR const char *ifname);
+#endif
 static void _netlib_setmacaddr(const char *ifname, const uint8_t *macaddr)
 {
 	struct netif *dev = netdev_findbyname(ifname);
