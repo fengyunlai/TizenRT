@@ -285,8 +285,13 @@ uint8_t LwIP_DHCP(uint8_t idx, uint8_t dhcp_state)
 		{
 			case DHCP_START:
 			{
+#if defined(LOW_POWER_WIFI_CONNECT) && LOW_POWER_WIFI_CONNECT
+				rtw_wakelock_timeout(800);
+#else 
 				/*acqurie wakelock to guarantee dhcp*/
 				rtw_wakelock_timeout(4*1000);
+#endif
+
 #if CONFIG_WLAN
 				wifi_unreg_event_handler(WIFI_EVENT_BEACON_AFTER_DHCP, wifi_rx_beacon_hdl);
 #endif
@@ -445,6 +450,9 @@ uint8_t LwIP_DHCP(uint8_t idx, uint8_t dhcp_state)
 #endif
 					return DHCP_TIMEOUT;
 					}
+#if defined(LOW_POWER_WIFI_CONNECT) && LOW_POWER_WIFI_CONNECT
+				pmu_set_max_sleep_time(2000);//in case DHCP fail
+#endif
 				}
 			}
 		break;
@@ -518,6 +526,7 @@ uint8_t* LwIP_GetMASK(struct netif *pnetif)
 uint8_t* LwIP_GetBC(struct netif *pnetif)
 {
 #if LWIP_VERSION_MAJOR >= 2
+	(void) pnetif;
 	//struct dhcp *dhcp = ((struct dhcp*)netif_get_client_data(pnetif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP));
 	return NULL;
 #else
@@ -590,51 +599,6 @@ void LwIP_UseStaticIP(struct netif *pnetif)
 	netif_set_addr(pnetif, &ipaddr , &netmask, &gw);
 #endif
 }
-
-#ifdef CONFIG_RTK_MESH
-void LwIP_SetIP(struct netif *pnetif, u32 *addr3)
-{
-	struct ip_addr ipaddr;
-	struct ip_addr netmask;
-	struct ip_addr gw;
-
-	/* Static address used */
-	if(pnetif->name[1] == '0'){
-#if CONFIG_WLAN
-#ifdef CONFIG_RTK_MESH
-		if(wifi_mode == RTW_MODE_AP){
-#if LWIP_VERSION_MAJOR >= 2
-			IP4_ADDR(ip_2_ip4(&ipaddr), AP_IP_ADDR0, AP_IP_ADDR1, AP_IP_ADDR2, *addr3);
-			IP4_ADDR(ip_2_ip4(&netmask), AP_NETMASK_ADDR0, AP_NETMASK_ADDR1 , AP_NETMASK_ADDR2, AP_NETMASK_ADDR3);
-			IP4_ADDR(ip_2_ip4(&gw), AP_GW_ADDR0, AP_GW_ADDR1, AP_GW_ADDR2, AP_GW_ADDR3);
-#else
-			IP4_ADDR(&ipaddr, AP_IP_ADDR0, AP_IP_ADDR1, AP_IP_ADDR2, *addr3);
-			IP4_ADDR(&netmask, AP_NETMASK_ADDR0, AP_NETMASK_ADDR1 , AP_NETMASK_ADDR2, AP_NETMASK_ADDR3);
-			IP4_ADDR(&gw, AP_GW_ADDR0, AP_GW_ADDR1, AP_GW_ADDR2, AP_GW_ADDR3);
-#endif
-		}
-#endif
-#endif
-	}else{
-#if LWIP_VERSION_MAJOR >= 2
-		IP4_ADDR(ip_2_ip4(&ipaddr), AP_IP_ADDR0, AP_IP_ADDR1, AP_IP_ADDR2, *addr3);
-		IP4_ADDR(ip_2_ip4(&netmask), AP_NETMASK_ADDR0, AP_NETMASK_ADDR1 , AP_NETMASK_ADDR2, AP_NETMASK_ADDR3);
-		IP4_ADDR(ip_2_ip4(&gw), AP_GW_ADDR0, AP_GW_ADDR1, AP_GW_ADDR2, AP_GW_ADDR3);
-#else		
-		IP4_ADDR(&ipaddr, AP_IP_ADDR0, AP_IP_ADDR1, AP_IP_ADDR2, *addr3);
-		IP4_ADDR(&netmask, AP_NETMASK_ADDR0, AP_NETMASK_ADDR1 , AP_NETMASK_ADDR2, AP_NETMASK_ADDR3);
-		IP4_ADDR(&gw, AP_GW_ADDR0, AP_GW_ADDR1, AP_GW_ADDR2, AP_GW_ADDR3);
-#endif
-	}
-	
-#if LWIP_VERSION_MAJOR >= 2
-	netif_set_addr(pnetif, ip_2_ip4(&ipaddr), ip_2_ip4(&netmask),ip_2_ip4(&gw));
-#else
-	netif_set_addr(pnetif, &ipaddr , &netmask, &gw);
-#endif
-}
-#endif
-
 #if LWIP_AUTOIP
 #include <lwip/autoip.h>
 #if LWIP_VERSION_MAJOR >= 2
@@ -651,7 +615,7 @@ void LwIP_AUTOIP(struct netif *pnetif)
 #else
 	autoip = pnetif->autoip;
 #endif
-	if(autoip) // before autoip_start(), autoip may be NULL
+	if(autoip && (autoip->tried_llipaddr >= MAX_CONFLICTS)) // before autoip_start(), autoip may be NULL
 		autoip->tried_llipaddr = 0;
 
 	autoip_start(pnetif);
