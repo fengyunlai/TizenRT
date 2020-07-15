@@ -510,8 +510,9 @@ wifi_manager_result_e _handler_on_disconnected_state(wifimgr_msg_s *msg)
 		/* store wifi ap info to reconnect when the device is disconnected abnormaly*/
 		WIFIMGR_COPY_AP_INFO(g_manager_info.connected_ap, *apinfo);
 		WIFIMGR_COPY_RECONN_INFO(g_manager_info.conn_config, *conn_config);
-		WIFIMGR_CHECK_RESULT(_wifimgr_connect_ap(apinfo), "connect ap fail\n", WIFI_MANAGER_FAIL);
 		WIFIMGR_SET_STATE(WIFIMGR_STA_CONNECTING);
+		WIFIMGR_CHECK_RESULT(_wifimgr_connect_ap(apinfo), "connect ap fail\n", WIFI_MANAGER_FAIL);
+		//WIFIMGR_SET_STATE(WIFIMGR_STA_CONNECTING);
 	} else if (msg->event == EVT_DEINIT_CMD) {
 		WIFIMGR_CHECK_RESULT(_wifimgr_deinit(), "critical error", WIFI_MANAGER_FAIL);
 		WIFIMGR_SEND_API_SIGNAL(msg->signal);

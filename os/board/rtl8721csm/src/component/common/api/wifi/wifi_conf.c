@@ -155,10 +155,10 @@ struct task_struct wifi_autoreconnect_task;
 
 #if defined(CONFIG_AUTO_RECONNECT) && CONFIG_AUTO_RECONNECT
 #ifndef AUTO_RECONNECT_COUNT
-#define AUTO_RECONNECT_COUNT	8
+#define AUTO_RECONNECT_COUNT	100
 #endif
 #ifndef AUTO_RECONNECT_INTERVAL
-#define AUTO_RECONNECT_INTERVAL	5	// in sec
+#define AUTO_RECONNECT_INTERVAL	10	// in sec
 #endif
 #endif
 
@@ -750,6 +750,14 @@ int wifi_connect(
 			if(wifi_is_connected_to_ap( ) != RTW_SUCCESS) {
 				printf(__func__,"\n wifi_is_connected_to_ap error!\n");
 				result = RTW_ERROR;
+				memset(&reason, 0, sizeof(rtk_reason_t));
+				reason.reason_code = RTK_STATUS_ERROR;
+				if (g_link_up) {
+					if (reason.reason_code)
+						ndbg("reason.reason_code=%d\n", reason.reason_code);
+					ndbg("RTK_API %s() send link_up\n", __func__);
+					g_link_up(&reason);
+				}
 				goto error;
 			}
 				memset(&reason, 0, sizeof(rtk_reason_t));
@@ -2593,7 +2601,7 @@ struct wifi_autoreconnect_param {
 	int password_len;
 	int key_id;
 };
-
+#undef CONFIG_PLATFORM_TIZENRT_OS
 #if defined(CONFIG_MBED_ENABLED) || defined(CONFIG_PLATFOMR_CUSTOMER_RTOS) || defined(CONFIG_PLATFORM_TIZENRT_OS)
 void wifi_autoreconnect_hdl(rtw_security_t security_type,
                             char *ssid, int ssid_len,
@@ -2644,7 +2652,7 @@ static void wifi_autoreconnect_thread(void *param)
 	param_indicator = NULL;
 	rtw_delete_task(&wifi_autoreconnect_task);
 }
-
+#define tskIDLE_PRIORITY			0
 void wifi_autoreconnect_hdl(rtw_security_t security_type,
                             char *ssid, int ssid_len,
                             char *password, int password_len,
