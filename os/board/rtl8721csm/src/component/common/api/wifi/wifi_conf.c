@@ -155,10 +155,10 @@ struct task_struct wifi_autoreconnect_task;
 
 #if defined(CONFIG_AUTO_RECONNECT) && CONFIG_AUTO_RECONNECT
 #ifndef AUTO_RECONNECT_COUNT
-#define AUTO_RECONNECT_COUNT	100
+#define AUTO_RECONNECT_COUNT	8
 #endif
 #ifndef AUTO_RECONNECT_INTERVAL
-#define AUTO_RECONNECT_INTERVAL	10	// in sec
+#define AUTO_RECONNECT_INTERVAL	5	// in sec
 #endif
 #endif
 
