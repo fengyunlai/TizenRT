@@ -381,25 +381,25 @@ void ipmcast_sender_thread(int num_packets, uint32_t sleep_time, const char *int
 	groupSock.sin_addr.s_addr = inet_addr(g_app_target_addr);
 	groupSock.sin_port = htons(g_app_target_port);
 
-	/*
-	 * Set local interface for outbound multicast datagrams.
-	 * The IP address specified must be associated with a local,
-	 * multicast-capable interface.
-	 */
-	//ret = netlib_get_ipv4addr(intf, &localInterface);
-	//if (ret == -1) {
-	//	printf("[MCASTCLIENT] fail to get interface's ip address\n");
-	//	goto out_with_socket;
-	//}
-	printf("[MCASTCLIENT] bind interface(%s)\n", intf);
-	printf("[MCASTCLIENT] group address(%s)\n", g_app_target_addr);
-	printf("[MCASTCLIENT] port(%d)\n", g_app_target_port);
-
 	if (setsockopt(sd, IPPROTO_IP, IP_MULTICAST_IF, (char *)&localInterface, sizeof(localInterface)) < 0) {
 		printf("[MCASTCLIENT] [ERR] Failed setting local interface");
 		goto out_with_socket;
 	}
 	printf("[MCASTCLIENT] setsockopt IP_MULTICAST_IF success\n");
+
+	/*
+	 * Set local interface for outbound multicast datagrams.
+	 * The IP address specified must be associated with a local,
+	 * multicast-capable interface.
+	 */
+	ret = netlib_get_ipv4addr(intf, &localInterface);
+	if (ret == -1) {
+		printf("[MCASTCLIENT] fail to get interface's ip address\n");
+		goto out_with_socket;
+	}
+	printf("[MCASTCLIENT] bind interface(%s)\n", intf);
+	printf("[MCASTCLIENT] group address(%s)\n", g_app_target_addr);
+	printf("[MCASTCLIENT] port(%d)\n", g_app_target_port);
 
 	/*
 	 * Send a message to the multicast group specified by the
