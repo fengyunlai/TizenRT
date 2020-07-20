@@ -1,9 +1,7 @@
 //----------------------------------------------------------------------------//
 //#include <flash/stm32_flash.h>
-#if !defined(CONFIG_MBED_ENABLED)
-#if !defined(CONFIG_PLATFOMR_CUSTOMER_RTOS)
+#if !defined(CONFIG_MBED_ENABLED) && !defined(CONFIG_PLATFOMR_CUSTOMER_RTOS)
 #include "main.h"
-#endif
 #include <lwip_netconf.h>
 #include <lwip/sockets.h>
 #include <dhcp/dhcps.h>
@@ -165,10 +163,11 @@ struct task_struct wifi_autoreconnect_task;
 /******************************************************
  *               Function Definitions
  ******************************************************/
+#if defined(CONFIG_PLATFORM_TIZENRT_OS)
 #include "rtk_wifi_utils.h"
 static rtk_network_link_callback_t g_link_up = NULL;
 static rtk_network_link_callback_t g_link_down = NULL;
-
+#endif
 #if CONFIG_WLAN
 
 extern unsigned char is_promisc_enabled(void);
@@ -188,7 +187,7 @@ static int wifi_connect_local(rtw_network_info_t *pWifi)
 	if(is_promisc_enabled())
 		promisc_set(0, NULL, 0);
 
-#if  !defined(LOW_POWER_WIFI_CONNECT) || (LOW_POWER_WIFI_CONNECT == 0)	
+#ifndef LOW_POWER_WIFI_CONNECT
 	/* lock 4s to forbid suspend under linking */
 	rtw_wakelock_timeout(4 *1000);
 #endif
@@ -360,7 +359,6 @@ static void wifi_disconn_hdl( char* buf, int buf_len, int flags, void* userdata)
 	( void ) userdata;
 #define REASON_4WAY_HNDSHK_TIMEOUT 15
 	u16 disconn_reason;
-	rtk_reason_t reason;
 	/* buf detail: mac addr + disconn_reason, buf_len = ETH_ALEN+2*/
 	if (buf != NULL){
 		/* buf detail: mac addr + disconn_reason, buf_len = ETH_ALEN+2*/
@@ -414,12 +412,15 @@ static void wifi_disconn_hdl( char* buf, int buf_len, int flags, void* userdata)
 	if(join_user_data != NULL) {
 		rtw_up_sema(&join_user_data->join_sema);
 	} else {
+#if defined(CONFIG_PLATFORM_TIZENRT_OS)
+		rtk_reason_t reason;
 		memset(&reason, 0, sizeof(rtk_reason_t));
 
 		if (g_link_down) {
 			ndbg("RTK_API rtk_link_event_handler send link_down\n");
 			g_link_down(&reason);
 		}
+#endif
 	}
 	//RTW_API_INFO("\r\nWiFi Disconnect. Error flag is %d.\n", error_flag);
 
@@ -528,6 +529,7 @@ void restore_wifi_info_to_flash(void)
 #endif
 
 //----------------------------------------------------------------------------//
+#if defined(CONFIG_PLATFORM_TIZENRT_OS)
 int8_t WiFiRegisterLinkCallback(rtk_network_link_callback_t link_up, rtk_network_link_callback_t link_down)
 {
 	if (!g_link_up) {
@@ -539,7 +541,7 @@ int8_t WiFiRegisterLinkCallback(rtk_network_link_callback_t link_up, rtk_network
 
 	return RTK_STATUS_SUCCESS;
 }
-
+#endif
 int wifi_connect(
 	char 				*ssid,
 	rtw_security_t	security_type,
@@ -553,12 +555,12 @@ int wifi_connect(
 	rtw_result_t result = RTW_SUCCESS;
 	u8 wep_hex = 0;
 	u8 wep_pwd[14] = {0};
+#if defined(CONFIG_PLATFORM_TIZENRT_OS)			
 	rtk_reason_t reason;
-
+#endif
 	if(rtw_join_status & JOIN_CONNECTING){
 		if(wifi_disconnect() < 0){
 			RTW_API_INFO("\nwifi_disconnect Operation failed!");
-			printf(__func__,"\nwifi_disconnect Operation failed!\n");
 			return RTW_ERROR;
 		}
 		while(rtw_join_status & JOIN_CONNECTING){
@@ -619,7 +621,6 @@ int wifi_connect(
 	
 	internal_join_result_t *join_result = (internal_join_result_t *)rtw_zmalloc(sizeof(internal_join_result_t));
 	if(!join_result) {
-		printf(__func__,"\njoin_result RTW_NOMEM!\n");
 		return RTW_NOMEM;
 	}
 
@@ -648,40 +649,28 @@ int wifi_connect(
 		rtw_init_sema( &join_result->join_sema, 0 );
 		if(!join_result->join_sema){
 			result =(rtw_result_t) RTW_NORESOURCE;
-			printf(__func__,"\njoin_result RTW_NORESOURCE!\n");
 			goto error;
 		}
 		join_semaphore = join_result->join_sema;
 	} else {
 		join_result->join_sema = semaphore;
 	}
-	printf(__func__,"\n wifi_no_network_hdl b4!\n");
 	wifi_reg_event_handler(WIFI_EVENT_NO_NETWORK,wifi_no_network_hdl,NULL);
-	printf(__func__,"\n wifi_connected_hdl b4 !\n");
 	wifi_reg_event_handler(WIFI_EVENT_CONNECT, wifi_connected_hdl, NULL);
-	printf(__func__,"\n wifi_disconn_hdl b4!\n");
 	wifi_reg_event_handler(WIFI_EVENT_DISCONNECT, wifi_disconn_hdl, NULL);
-	printf(__func__,"\n wifi_handshake_done_hdl b4!\n");
 	wifi_reg_event_handler(WIFI_EVENT_FOURWAY_HANDSHAKE_DONE, wifi_handshake_done_hdl, NULL);
-	printf(__func__,"\n wifi_handshake_done_hdl after!\n");
 
 // if is connected to ap, would trigger disconn_hdl but need to make sure it is invoked before setting join_user_data
 #if CONFIG_WIFI_IND_USE_THREAD
 	if(wifi_is_connected_to_ap() == RTW_SUCCESS){
-		printf(__func__,"\n disconnect_sema !\n");
 		rtw_init_sema( &disconnect_sema, 0 );
 	}
 #endif
 
 	rtw_join_status = JOIN_CONNECTING;
-	printf(__func__,"\n wifi_connect_local b4 !\n");
 	result = wifi_connect_local(&join_result->network_info);
-	printf(__func__,"\n wifi_connect_local after !\n");
 	if(result != 0)
-		{
-		printf(__func__,"\n wifi_connect_local error !\n");
 		goto error;
-		}
 
 #if CONFIG_WIFI_IND_USE_THREAD
 	if(disconnect_sema != NULL){
@@ -691,7 +680,6 @@ int wifi_connect(
 #endif
 
 	join_user_data = join_result;
-	printf(__func__,"\n here!\n");
 
 	if(semaphore == NULL) {
 // for eap connection, timeout should be longer (default value in wpa_supplicant: 60s)
@@ -719,6 +707,7 @@ int wifi_connect(
 				rtw_free(join_result->network_info.password);
 			}
 			result = RTW_TIMEOUT;
+#if defined(CONFIG_PLATFORM_TIZENRT_OS)			
 				memset(&reason, 0, sizeof(rtk_reason_t));
 				switch (error_flag) {
 				case RTW_NONE_NETWORK:
@@ -741,25 +730,17 @@ int wifi_connect(
 					ndbg("RTK_API %s() send link_up\n", __func__);
 					g_link_up(&reason);
 				}
+#endif
 			goto error;
 		} else {
 			if(join_result->network_info.password_len) {
 				rtw_free(join_result->network_info.password);
 			}
-			printf(__func__,"\n wifi_is_connected_to_ap!\n");
 			if(wifi_is_connected_to_ap( ) != RTW_SUCCESS) {
-				printf(__func__,"\n wifi_is_connected_to_ap error!\n");
 				result = RTW_ERROR;
-				memset(&reason, 0, sizeof(rtk_reason_t));
-				reason.reason_code = RTK_STATUS_ERROR;
-				if (g_link_up) {
-					if (reason.reason_code)
-						ndbg("reason.reason_code=%d\n", reason.reason_code);
-					ndbg("RTK_API %s() send link_up\n", __func__);
-					g_link_up(&reason);
-				}
 				goto error;
 			}
+#if defined(CONFIG_PLATFORM_TIZENRT_OS)
 				memset(&reason, 0, sizeof(rtk_reason_t));
 				rtw_memcpy(reason.bssid, join_result->network_info.bssid.octet, ETH_ALEN);
 				rtw_memcpy(reason.ssid, join_result->network_info.ssid.val, 32);
@@ -773,11 +754,11 @@ int wifi_connect(
 					ndbg("RTK_API %s() send link_up\n", __func__);
 					g_link_up(&reason);
 				}
+#endif
 		}
 	}
 
 	result = RTW_SUCCESS;
-	printf(__func__,"\n here 2!\n");
 #if CONFIG_LWIP_LAYER
 #if defined(CONFIG_MBED_ENABLED) || defined(CONFIG_PLATFOMR_CUSTOMER_RTOS)
 	//TODO
@@ -791,6 +772,16 @@ int wifi_connect(
 #endif
 
 error:
+#if defined(CONFIG_PLATFORM_TIZENRT_OS)
+	memset(&reason, 0, sizeof(rtk_reason_t));
+	reason.reason_code = RTK_STATUS_ERROR;
+	if (g_link_up) {
+		if (reason.reason_code)
+			ndbg("reason.reason_code=%d\n", reason.reason_code);
+		ndbg("RTK_API %s() send link_up\n", __func__);
+		g_link_up(&reason);
+	}
+#endif
 	if(semaphore == NULL){		
 		rtw_free_sema( &join_semaphore);
 	}
@@ -1448,9 +1439,10 @@ int wifi_off(void)
 	}
 
 	wifi_mode = RTW_MODE_NONE;
-
+#if defined(CONFIG_PLATFORM_TIZENRT_OS)
 	g_link_up = NULL;
 	g_link_down = NULL;
+#endif
 
 #if CONFIG_INIC_EN
 	inic_stop();
@@ -1493,7 +1485,7 @@ int wifi_set_mode(rtw_mode_t mode)
 		return -1;
 	}
 
-/*#ifdef CONFIG_WLAN_SWITCH_MODE
+#ifdef CONFIG_WLAN_SWITCH_MODE
 #if defined(CONFIG_AUTO_RECONNECT) && CONFIG_AUTO_RECONNECT
 	wifi_get_autoreconnect(&autoreconnect_mode);
 	if(autoreconnect_mode != RTW_AUTORECONNECT_DISABLE){
@@ -1511,7 +1503,7 @@ int wifi_set_mode(rtw_mode_t mode)
 	next_mode = mode;
 	ret = rltk_set_mode_prehandle(curr_mode, next_mode, WLAN0_NAME);
 	if(ret < 0) goto Exit;
-#endif*/
+#endif
 	if((wifi_mode == RTW_MODE_STA) && (mode == RTW_MODE_AP)){
 		RTW_API_INFO("\n\r[%s] WIFI Mode Change: STA-->AP",__FUNCTION__);
 		
@@ -1543,7 +1535,7 @@ int wifi_set_mode(rtw_mode_t mode)
 		ret = wext_set_mode(WLAN0_NAME, IW_MODE_INFRA);
 		if(ret < 0) goto Exit;
 		
-		rtw_msleep_os(50);	
+		rtw_mdelay_os(50);	
 
 	}else if ((wifi_mode == RTW_MODE_STA) && (mode == RTW_MODE_STA)){
 		RTW_API_INFO("\n\rWIFI Mode No Need To Change: STA -->STA");
@@ -1566,16 +1558,16 @@ int wifi_set_mode(rtw_mode_t mode)
 		goto Exit;
 	}
 
-/*#ifdef CONFIG_WLAN_SWITCH_MODE
+#ifdef CONFIG_WLAN_SWITCH_MODE
 	ret = rltk_set_mode_posthandle(curr_mode, next_mode, WLAN0_NAME);
 	if(ret < 0) goto Exit;
 #if defined(CONFIG_AUTO_RECONNECT) && CONFIG_AUTO_RECONNECT
-	// enable auto reconnect
+	/* enable auto reconnect */
 	if(autoreconnect_mode != RTW_AUTORECONNECT_DISABLE){
 		wifi_set_autoreconnect(autoreconnect_mode);
 	}
 #endif
-#endif*/
+#endif
 
 	return 0;
 Exit:
@@ -1634,6 +1626,7 @@ static void wifi_ap_sta_assoc_hdl( char* buf, int buf_len, int flags, void* user
 	( void ) flags;
 	( void ) userdata;
 	//USER TODO
+#if defined(CONFIG_PLATFORM_TIZENRT_OS)
 	rtk_reason_t reason;
 	memset(&reason, 0, sizeof(rtk_reason_t));
 	if (strlen(buf) >= 17) {			  // bssid is a 17 character string
@@ -1644,6 +1637,7 @@ static void wifi_ap_sta_assoc_hdl( char* buf, int buf_len, int flags, void* user
 		ndbg("RTK_API rtk_link_event_handler send link_up\n");
 		g_link_up(&reason);
 	}
+#endif
 }
 static void wifi_ap_sta_disassoc_hdl( char* buf, int buf_len, int flags, void* userdata)
 {
@@ -1653,6 +1647,7 @@ static void wifi_ap_sta_disassoc_hdl( char* buf, int buf_len, int flags, void* u
 	( void ) flags;
 	( void ) userdata;
 	//USER TODO
+#if defined(CONFIG_PLATFORM_TIZENRT_OS)
 	rtk_reason_t reason;
 	memset(&reason, 0, sizeof(rtk_reason_t));
 	if (strlen(buf) >= 17) { // bssid is a 17 character string
@@ -1662,6 +1657,7 @@ static void wifi_ap_sta_disassoc_hdl( char* buf, int buf_len, int flags, void* u
 		ndbg("RTK_API rtk_handle_disconnect send link_down\n");
 		g_link_down(&reason);
 	}
+#endif
 }
 
 int wifi_get_last_error(void)
@@ -2601,8 +2597,8 @@ struct wifi_autoreconnect_param {
 	int password_len;
 	int key_id;
 };
-#undef CONFIG_PLATFORM_TIZENRT_OS
-#if defined(CONFIG_MBED_ENABLED) || defined(CONFIG_PLATFOMR_CUSTOMER_RTOS) || defined(CONFIG_PLATFORM_TIZENRT_OS)
+
+#if defined(CONFIG_MBED_ENABLED) || defined(CONFIG_PLATFOMR_CUSTOMER_RTOS)
 void wifi_autoreconnect_hdl(rtw_security_t security_type,
                             char *ssid, int ssid_len,
                             char *password, int password_len,
@@ -2652,7 +2648,7 @@ static void wifi_autoreconnect_thread(void *param)
 	param_indicator = NULL;
 	rtw_delete_task(&wifi_autoreconnect_task);
 }
-#define tskIDLE_PRIORITY			0
+
 void wifi_autoreconnect_hdl(rtw_security_t security_type,
                             char *ssid, int ssid_len,
                             char *password, int password_len,
@@ -2667,7 +2663,7 @@ void wifi_autoreconnect_hdl(rtw_security_t security_type,
 	param->password_len = password_len;
 	param->key_id = key_id;
 	//xTaskCreate(wifi_autoreconnect_thread, (const char *)"wifi_autoreconnect", 512, &param, tskIDLE_PRIORITY + 1, NULL);
-	rtw_create_task(&wifi_autoreconnect_task, (const char *)"wifi_autoreconnect", 512, tskIDLE_PRIORITY + 1, wifi_autoreconnect_thread, param);
+	rtw_create_task(&wifi_autoreconnect_task, (const char *)"wifi_autoreconnect", 512, 1, wifi_autoreconnect_thread, param);
 }
 #endif
 
@@ -3115,7 +3111,7 @@ WL_BAND_TYPE wifi_get_band_type(void)
 	}
 }
 
-#if defined(LOW_POWER_WIFI_CONNECT) && LOW_POWER_WIFI_CONNECT
+#ifdef LOW_POWER_WIFI_CONNECT
 int wifi_set_psk_eap_interval(uint16_t psk_interval, uint16_t eap_interval)
 {
 	return rltk_set_psk_eap_interval(psk_interval, eap_interval);
