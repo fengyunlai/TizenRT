@@ -557,6 +557,8 @@ int wifi_connect(
 	u8 wep_pwd[14] = {0};
 #if defined(CONFIG_PLATFORM_TIZENRT_OS)			
 	rtk_reason_t reason;
+	memset(&reason, 0, sizeof(rtk_reason_t));
+	reason.reason_code = RTK_STATUS_ERROR;
 #endif
 	if(rtw_join_status & JOIN_CONNECTING){
 		if(wifi_disconnect() < 0){
@@ -724,12 +726,6 @@ int wifi_connect(
 					break;
 				}
 
-				if (g_link_up) {
-					if (reason.reason_code)
-						ndbg("reason.reason_code=%d\n", reason.reason_code);
-					ndbg("RTK_API %s() send link_up\n", __func__);
-					g_link_up(&reason);
-				}
 #endif
 			goto error;
 		} else {
@@ -747,13 +743,6 @@ int wifi_connect(
 				reason.ssid_len = join_result->network_info.ssid.len;
 				reason.reason_code = RTK_STATUS_SUCCESS;
 
-				if (g_link_up) {
-					if (reason.reason_code) {
-						ndbg("reason.reason_code=%d\n", reason.reason_code);
-					}
-					ndbg("RTK_API %s() send link_up\n", __func__);
-					g_link_up(&reason);
-				}
 #endif
 		}
 	}
@@ -773,8 +762,6 @@ int wifi_connect(
 
 error:
 #if defined(CONFIG_PLATFORM_TIZENRT_OS)
-	memset(&reason, 0, sizeof(rtk_reason_t));
-	reason.reason_code = RTK_STATUS_ERROR;
 	if (g_link_up) {
 		if (reason.reason_code)
 			ndbg("reason.reason_code=%d\n", reason.reason_code);
