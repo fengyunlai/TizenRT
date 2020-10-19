@@ -724,12 +724,6 @@ int wifi_connect(
 					break;
 				}
 
-				if (g_link_up) {
-					if (reason.reason_code)
-						ndbg("reason.reason_code=%d\n", reason.reason_code);
-					ndbg("RTK_API %s() send link_up\n", __func__);
-					g_link_up(&reason);
-				}
 #endif
 			goto error;
 		} else {
@@ -738,16 +732,6 @@ int wifi_connect(
 			}
 			if(wifi_is_connected_to_ap( ) != RTW_SUCCESS) {
 				result = RTW_ERROR;
-#if defined(CONFIG_PLATFORM_TIZENRT_OS)
-				memset(&reason, 0, sizeof(rtk_reason_t));
-				reason.reason_code = RTK_STATUS_ERROR;
-				if (g_link_up) {
-					if (reason.reason_code)
-						ndbg("reason.reason_code=%d\n", reason.reason_code);
-					ndbg("RTK_API %s() send link_up\n", __func__);
-					g_link_up(&reason);
-				}
-#endif
 				goto error;
 			}
 #if defined(CONFIG_PLATFORM_TIZENRT_OS)
@@ -757,13 +741,6 @@ int wifi_connect(
 				reason.ssid_len = join_result->network_info.ssid.len;
 				reason.reason_code = RTK_STATUS_SUCCESS;
 
-				if (g_link_up) {
-					if (reason.reason_code) {
-						ndbg("reason.reason_code=%d\n", reason.reason_code);
-					}
-					ndbg("RTK_API %s() send link_up\n", __func__);
-					g_link_up(&reason);
-				}
 #endif
 		}
 	}
@@ -782,6 +759,14 @@ int wifi_connect(
 #endif
 
 error:
+#if defined(CONFIG_PLATFORM_TIZENRT_OS)
+	if (g_link_up) {
+		if (reason.reason_code)
+			ndbg("reason.reason_code=%d\n", reason.reason_code);
+		ndbg("RTK_API %s() send link_up\n", __func__);
+		g_link_up(&reason);
+	}
+#endif
 	if(semaphore == NULL){		
 		rtw_free_sema( &join_semaphore);
 	}
