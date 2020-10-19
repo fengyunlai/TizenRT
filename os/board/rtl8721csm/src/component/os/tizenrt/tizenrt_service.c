@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2013-2016, Realtek Semiconductor Corp.
+ * Copyright (c) 2013-2016 Realtek Semiconductor Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
-
 #include <osdep_service.h>
 #include <stdio.h>
 #include "rtl8721d_cache.h"
@@ -25,13 +24,11 @@
 #define USE_MUTEX_FOR_SPINLOCK 1
 #endif
 
-#if defined(CONFIG_PLATFORM_TIZENRT_OS)
 #define USE_PTHREAD_MUTEX 0		//todo
-#endif
 
-/******************************************************************************
- *                    Misc Function
- ******************************************************************************/
+//----- ------------------------------------------------------------------
+// Misc Function
+//----- ------------------------------------------------------------------
 extern void timer_wrapper(_timerHandle timer_hdl);
 
 static irqstate_t tizen_flags;
@@ -353,7 +350,7 @@ static void _tizenrt_cpu_unlock(void)
 #if defined(CONFIG_PLATFORM_8195BHP)
 	int duration = (int)gtimer_read_us(&tmp_timer_obj) / 1000;
 	gtimer_deinit(&tmp_timer_obj);
-	/* compensate rtos tick */
+	// compensate rtos tick
 	vTaskIncTick(duration);
 	icache_enable();
 	icache_invalidate();
@@ -482,7 +479,7 @@ static void _tizenrt_msleep_os(int ms)
 
 static void _tizenrt_usleep_os(int us)
 {
-	usleep((unsigned int)us);
+	up_udelay((unsigned int)us);
 }
 
 static void _tizenrt_mdelay_os(int ms)
@@ -641,9 +638,11 @@ static int wrapper_thread(int argc, char *argv[])
 	void *thctx;
 	if (argc != 3) {
 		DBG_ERR("%s error\n", argv[0]);
-		return -1;
+		return -1;	
 	}
 	/* Arguments : [0] task name [1] func addr, [2] ctx addr */
+	//for (ret = 0; ret < argc; ret ++)
+	//	printf("%s: %d %s\r\n", __func__, ret, argv[ret]);
 	func_addr = strtoul(argv[1], NULL, 16);
 	ctx_addr = strtoul(argv[2], NULL, 16);
 	func = (thread_func_t)func_addr;
@@ -653,7 +652,30 @@ static int wrapper_thread(int argc, char *argv[])
 }
 static int _tizenrt_create_task(struct task_struct *ptask, const char *name, u32 stack_size, u32 priority, thread_func_t func, void *thctx)
 {
-#if USE_PTHREAD_MUTEX
+#if 1
+	int func_addr, ctx_addr;
+	pid_t pid;
+	char str_func_addr[8+1];
+	char str_ctx_addr[8+1];
+	char *task_info[2 + 1];
+	priority = SCHED_PRIORITY_DEFAULT + priority;
+	priority = (priority  > SCHED_PRIORITY_MAX || priority < SCHED_PRIORITY_MIN)?SCHED_PRIORITY_DEFAULT:priority;
+	stack_size *= sizeof(uint32_t);
+	/* Execute loading thread for load all binaries */
+	func_addr = (int)func;
+	ctx_addr = (int)thctx;
+	task_info[0] = itoa(func_addr, str_func_addr, 16);
+	task_info[1] = itoa(ctx_addr, str_ctx_addr, 16);
+	task_info[2] = NULL;
+	pid = kernel_thread(name, priority, stack_size, wrapper_thread, (char * const *)task_info);
+	if (pid == ERROR) {
+		DBG_ERR("%s fail\n", name);
+		return _FAIL;
+	}
+	ptask->task = pid;
+	ptask->task_name = name;
+	return _SUCCESS;
+#else
 	pthread_attr_t attr;
 	struct sched_param sparam;
 	int res = 0;
@@ -678,7 +700,7 @@ static int _tizenrt_create_task(struct task_struct *ptask, const char *name, u32
 	}
 
 	sparam.sched_priority = PTHREAD_DEFAULT_PRIORITY + priority;
-
+	
 	res = pthread_attr_setschedparam(&attr, &sparam);
 	if (res != OK) {
 		DBG_ERR("Failed to pthread_attr_setstacksize\n");
@@ -704,71 +726,51 @@ err_exit:
 	ptask->task = NULL;
 	ptask->task_name = NULL;
 	return _FAIL;
-#else
-	int func_addr, ctx_addr;
-	pid_t pid;
-	char str_func_addr[9];
-	char str_ctx_addr[9];
-	char *task_info[3];
-	priority = SCHED_PRIORITY_DEFAULT + priority;
-	priority = (priority > SCHED_PRIORITY_MAX || priority < SCHED_PRIORITY_MIN)?SCHED_PRIORITY_DEFAULT:priority;
-	stack_size *= sizeof(uint32_t);
-	/* Execute loading thread for load all binaries */
-	func_addr = (int)func;
-	ctx_addr = (int)thctx;
-	task_info[0] = itoa(func_addr, str_func_addr, 16);
-	task_info[1] = itoa(ctx_addr, str_ctx_addr, 16);
-	task_info[2] = NULL;
-	pid = kernel_thread(name, priority, stack_size, wrapper_thread, (char * const *)task_info);
-	if (pid == ERROR) {
-		DBG_ERR("%s fail\n", name);
-		return _FAIL;
-	}
-	ptask->task = pid;
-	ptask->task_name = name;
-	return _SUCCESS;
 #endif
 }
 
 static void _tizenrt_delete_task(struct task_struct *ptask)
 {
-#if USE_PTHREAD_MUTEX
+#if 1
+	pid_t pid;
+	int status;
+	pid = (pid_t) ptask->task;
+	status = task_delete(pid);
+	if (status != OK) {
+		DBG_ERR("delete the task failed!", ptask->task_name);
+	}
+	ptask->task = NULL;
+#else
 	int status = 0;
 	pthread_t *tid = (pthread_t *) ptask->task;
 	if (!ptask->task || *tid == 0) {
 		DBG_ERR("_tizenrt_delete_task(): ptask is NULL %s!\n", ptask->task_name);
 		return;
 	}
+	//status = task_delete(ptask->task); //TODO
 	status = pthread_cancel(*tid);
 	if (status != OK) {
-		DBG_ERR("delete the task failed, status=%d!\n", status);
+		DBG_ERR("delete the task failed!", ptask->task_name);
 		return;
 	}
 	_tizenrt_mfree(tid, sizeof(*tid));
-	ptask->task = NULL;
-#else
-	pid_t pid;
-	int status;
-	pid = (pid_t) ptask->task;
-	status = task_delete(pid);
-	if (status != OK) {
-		DBG_ERR("delete the task failed, status=%d!\n", status);
-	}
 	ptask->task = NULL;
 #endif
 	return;
 }
 
+/*
+void _tizenrt_wakeup_task(struct task_struct *task)
+{
+	sem_post(task->wakeup_sema);
+	return;
+}
+*/
+
 static void _tizenrt_set_priority_task(void* task, u32 NewPriority)
 {
 	FAR struct tcb_s *rtcb = sched_gettcb((pid_t)task);
 	DiagPrintf("%s %d\r\n", __func__, __LINE__);
-
-	if (rtcb == NULL) {
-		prefdbg("Failed to get main task %d!\n", (pid_t)task)
-		return;
-	}
-
 	sched_setpriority(rtcb, NewPriority + SCHED_PRIORITY_DEFAULT);
 	return;
 }
@@ -777,12 +779,6 @@ static int _tizenrt_get_priority_task(void *task)
 {
 	FAR struct tcb_s *rtcb = sched_gettcb((pid_t)task);
 	DiagPrintf("%s %d\r\n", __func__, __LINE__);
-
-	if (rtcb == NULL) {
-		prefdbg("Failed to get main task %d!\n", (pid_t)task)
-		return _FAIL;
-	}
-
 	return rtcb->sched_priority - SCHED_PRIORITY_DEFAULT;
 }
 
@@ -790,12 +786,6 @@ static void _tizenrt_suspend_task(void *task)
 {
 	FAR struct tcb_s *rtcb = sched_gettcb((pid_t)task);
 	DiagPrintf("%s %d\r\n", __func__, __LINE__);
-
-	if (rtcb == NULL) {
-		prefdbg("Failed to get main task %d!\n", (pid_t)task)
-		return;
-	}
-
 	return;
 }
 
@@ -803,12 +793,6 @@ static void _tizenrt_resume_task(void *task)
 {
 	FAR struct tcb_s *rtcb = sched_gettcb((pid_t)task);
 	DiagPrintf("%s %d\r\n", __func__, __LINE__);
-
-	if (rtcb == NULL) {
-		prefdbg("Failed to get main task %d!\n", (pid_t)task)
-		return;
-	}
-
 	return;
 }
 
@@ -820,10 +804,10 @@ static void _tizenrt_thread_enter(char *name)
 static void _tizenrt_thread_exit(void)
 {
 	DBG_INFO("\n\rRTKTHREAD exit %s\n", __FUNCTION__);
-#if USE_PTHREAD_MUTEX
-	pthread_exit(NULL);
-#else
+#if 1
 	exit(EXIT_SUCCESS);
+#else
+	pthread_exit(NULL);
 #endif
 }
 
@@ -832,11 +816,15 @@ _timerHandle _tizenrt_timerCreate(const signed char *pcTimerName, osdepTickType 
 	struct timer_list_priv *timer = (struct timer_list_priv *)_tizenrt_zmalloc(sizeof(struct timer_list_priv));
 	if (timer == NULL) {
 		DBG_ERR("Fail to alloc priv");
+		//rtw_timerDelete(timer, TIMER_MAX_DELAY);
+		//timer->timer_hdl = NULL;
 		return NULL;
 	}
 	timer->work_hdl = (struct work_s *)_tizenrt_zmalloc(sizeof(struct work_s));
 	if (timer->work_hdl == NULL) {
 		DBG_ERR("Fail to alloc timer->work_hdl");
+		//_tizenrt_timerDelete(timer, TIMER_MAX_DELAY);
+		//timer->timer_hdl = NULL;
 		kmm_free(timer);
 		return NULL;
 	}
@@ -879,7 +867,7 @@ cleanup:
 	timer->live = 0;
 	kmm_free(timer->work_hdl);
 	kmm_free(timer);
-
+	//DBG_ERR("_tizenrt_del_timer is Done! timer->work_hdl = %x", timer->work_hdl);
 	return _SUCCESS;
 }
 
@@ -888,6 +876,7 @@ u32 _tizenrt_timerIsTimerActive(_timerHandle xTimer)
 	struct timer_list_priv *timer = (struct timer_list_priv *)xTimer;
 
 	return timer->live;
+	//return (timer->work_hdl->worker != NULL);
 }
 
 u32 _tizenrt_timerStop(_timerHandle xTimer, osdepTickType xBlockTime)

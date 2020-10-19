@@ -88,6 +88,10 @@ endif
 ifeq ($(CONFIG_USBD_MSC),y)
 include component/soc/realtek/amebad/fwlib/usb_otg/device/class/msc/src/Make.defs
 endif
+include component/common/api/at_cmd/Make.defs
+include project/realtek_amebaD_va0_example/src/Make.defs
+include component/common/utilities/Make.defs
+include component/common/example/cm_backtrace/Make.defs
 
 ARCH_SRCDIR = 	$(TOPDIR)/arch/$(CONFIG_ARCH)/src/
 BOARD_SRCDIR = 	$(TOPDIR)/board
@@ -105,6 +109,7 @@ CFGDIR = 	$(BOARD_SRCDIR)/$(CONFIG_ARCH_BOARD)/src/component/soc/realtek/amebad/
 DIR_OTG = 	$(BOARD_SRCDIR)/$(CONFIG_ARCH_BOARD)/src/component/soc/realtek/amebad/fwlib/usb_otg/device
 
 CFLAGS += -I$(DIR)/../include
+CFLAGS += -I$(TOPDIR)/board/$(CONFIG_ARCH_BOARD)/src/component/soc/realtek/amebad/swlib/include/
 CFLAGS += -I$(TOPDIR)/board/$(CONFIG_ARCH_BOARD)/src/component/soc/realtek/amebad/swlib/string/
 CFLAGS += -I$(TOPDIR)/board/$(CONFIG_ARCH_BOARD)/src/component/soc/realtek/amebad/app/monitor/include/
 CFLAGS += -I$(TOPDIR)/board/$(CONFIG_ARCH_BOARD)/src/component/soc/realtek/amebad/app/xmodem/

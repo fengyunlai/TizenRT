@@ -1,19 +1,8 @@
 /******************************************************************************
- * Copyright (c) 2013-2016, Realtek Semiconductor Corp.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
+ *                                        
  ******************************************************************************/
-
 #include <osdep_service.h>
 #if defined(CONFIG_USE_TCM_HEAP) && CONFIG_USE_TCM_HEAP
 #include "tcm_heap.h"
@@ -836,6 +825,37 @@ int rtw_deinit_xqueue( _xqueue* queue )
 	return FAIL;
 }
 
+#if 0
+void rtw_init_queue(_queue *pqueue)
+{
+	rtw_init_listhead(&(pqueue->queue));
+	rtw_mutex_init(&(pqueue->lock));
+}
+
+void	rtw_deinit_queue(_queue *pqueue)
+{
+	rtw_mutex_free(&(pqueue->lock));
+}
+
+u32 rtw_is_queue_empty(_queue *pqueue)
+{
+	return (rtw_is_list_empty(&(pqueue->queue)));
+}
+
+u32 rtw_end_of_queue_search(_list *head, _list *plist)
+{
+	if (head == plist)
+		return _TRUE;
+
+	return _FALSE;
+}
+
+_list	*rtw_get_queue_head(_queue	*queue)
+{
+	return (&(queue->queue));
+}
+#endif
+
 u32 rtw_get_current_time(void)
 {
 	if(osdep_service.rtw_get_current_time)
@@ -1151,7 +1171,7 @@ void rtw_set_priority_task(void* task, u32 NewPriority)
 	else
 		OSDEP_DBG("Not implement osdep service: rtw_set_priority_task");
 
-	return;
+	return;	
 }
 
 int rtw_get_priority_task(void* task)
@@ -1161,9 +1181,8 @@ int rtw_get_priority_task(void* task)
 	else
 		OSDEP_DBG("Not implement osdep service: rtw_get_priority_task");
 
-	return -1;
+	return -1;	
 }
-
 void rtw_suspend_task(void *task)
 {
 	if (osdep_service.rtw_suspend_task)

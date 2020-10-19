@@ -63,13 +63,16 @@ MEMORY
 	RSVD_RAM_NS (rw)  : 		ORIGIN = 0x10002000, LENGTH = 0x10004000 - 0x10002000	/* RSVD RAM: 8K */
 	MSP_RAM_NS (rw)  : 		ORIGIN = 0x10004000, LENGTH = 0x10005000 - 0x10004000	/* MSP_NS RAM: 4K */
 
-	BD_RAM_NS (rwx)  : 		ORIGIN = 0x10005000, LENGTH = 0x1007C000 - 0x10005000	/* MAIN RAM NS: 456K */
+	BD_RAM_NS (rwx)  : 		ORIGIN = 0x10005000, LENGTH = 0x10077000 - 0x10005000	/* MAIN RAM NS: 456K */
+	BD_RAM_S (rwx)  : 		ORIGIN = 0x10077000, LENGTH = 0x1007B000 - 0x10077000	/* MAIN RAM S: 16K */
+	BD_RAM_NSC (rwx)  : 		ORIGIN = 0x1007B000, LENGTH = 0x1007C000 - 0x1007B000	/* MAIN RAM NSC: 4K */
 	ROMBSS_RAM_S (rwx)  : 		ORIGIN = 0x1007C000, LENGTH = 0x1007D000 - 0x1007C000	/* ROM BSS RAM S: 4K */
 	BOOTLOADER_RAM_S (rwx)  : 	ORIGIN = 0x1007D000, LENGTH = 0x1007F000 - 0x1007D000	/* BOOT Loader RAM: 8K */
 	MSP_RAM_S (rwx)  : 		ORIGIN = 0x1007F000, LENGTH = 0x10080000 - 0x1007F000	/* MSP_S RAM: 4k */
 	EXTENTION_SRAM (rwx)  : 		ORIGIN = 0x100E0000, LENGTH = 0x10100000 - 0x100E0000	/* EXTENTION SRAM: 128k */
 
-	PSRAM_NS (rwx)  : 		ORIGIN = 0x02000000, LENGTH = 0x02400000 - 0x02000000	/* PSRAM_NS: 4M */
+	PSRAM_NS (rwx)  : 		ORIGIN = 0x02000000, LENGTH = 0x02300000 - 0x02000000	/* PSRAM_NS: 3M */
+	PSRAM_S (rwx)	:		ORIGIN = 0x02300000, LENGTH = 0x02400000 - 0x02300000	/* PSRAM_S: 1M */
 
 	/* Flash */
 	KM0_BOOT (rx)  :		ORIGIN = 0x08000000+0x20, LENGTH = 0x02000-0x20	/* XIPBOOT: 8k, 32 Bytes resvd for header*/
@@ -79,7 +82,7 @@ MEMORY
 	KM0_IMG2 (rx)  : 		ORIGIN = 0x0C000000+0x20, LENGTH = 0x02000000-0x20	/* KM0_IMG2: 32MB, 32 Bytes resvd for header, virtual address */
 	KM4_IMG2 (rx)  : 		ORIGIN = 0x0E000000+0x20, LENGTH = 0x02000000-0x20	/* KM4_IMG2 OTA1: 32MB, 32 Bytes resvd for header,  virtual address */
 	BTRACE (rx) :			ORIGIN = 0x00800000, LENGTH = 0x00C00000 -0x00800000	/* Bluetooth Trace */
-	
+
 	/* KM0 RAM*/
 	KM0_SRAM (rwx)  : 		ORIGIN = 0x00080000, LENGTH = 0x00090000 - 0x00080000	/* KM0 SRAM: 64k */
 	RETENTION_RAM (rwx)  : 		ORIGIN = 0x000C0000, LENGTH = 0x000C0400 - 0x000C0000	/* KM0 Retention SRAM: 1k */
@@ -106,11 +109,12 @@ SECTIONS
 
 	.ram_image2.text :
 	{
+		__ram_text_start__ = .;
 		_stext = ABSOLUTE(.);
 		*(.image2.ram.text*)
 		*(.image2.net.ram.text*)
 		_etext = ABSOLUTE(.);
-		__ram_image2_text_end__ = .;
+		__ram_text_end__ = .;
 	} > BD_RAM_NS
 
 	_eronly = ABSOLUTE(.);
@@ -125,15 +129,6 @@ SECTIONS
 		__ram_image2_text_end__ = .;
 		. = ALIGN(16);	
 	} > BD_RAM_NS
-  
-	.ram_image2.nocache.data :
-	{
-		. = ALIGN (32);
-		__ram_nocache_start__ = .;
-		*(.bdsram.data*)
-		. = ALIGN (32);
-		__ram_nocache_end__ = .;
-	} > BD_RAM_NS
 
 	.ram_image2.bss :
 	{
@@ -142,16 +137,26 @@ SECTIONS
 		*(.bss*)
 		*(COMMON)
 		__bss_end__ = .;
-		_ebss = ABSOLUTE(.);
+
 	} > BD_RAM_NS
 
+	.ram_image2.nocache.data :
+	{
+		. = ALIGN (32);
+		__ram_nocache_start__ = .;
+		*(.bdsram.data*)
+		. = ALIGN (32);
+		__ram_nocache_end__ = .;
+	} > BD_RAM_NS
+	  
 	.ram_heap.data : 
 	{
+		. = ALIGN (32);
 		*(.bfsram.data*)
 		end = .;
 		*(.heap.stdlib*)
 		. = . + 4096;
-	
+		_ebss = ABSOLUTE(.);
 	} > BD_RAM_NS
 
 	.xip_image2.text : 
@@ -223,12 +228,15 @@ SECTIONS
 
 	.psram_image2.data : 
 	{
+		. = ALIGN (32);
 		*(.psram.data*)
+		. = ALIGN (32);
 		*(.psram.rodata*)
 	} > PSRAM_NS
   
 	.psram_image2.bss :
 	{
+		. = ALIGN (32);
 		__psram_bss_start__ = .;
 		*(.psram.bss*)
 		__psram_bss_end__ = .;
@@ -236,6 +244,7 @@ SECTIONS
 
 	.psram_heap.data : 
 	{
+		. = ALIGN (32);
 		*(.psram.heap*)
 	} > PSRAM_NS
 	__StackLimit = ABSOLUTE(ORIGIN(BD_RAM_NS) + LENGTH(BD_RAM_NS));

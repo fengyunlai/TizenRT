@@ -232,14 +232,14 @@
 #define PSK_SUPPORT_TKIP	1
 #endif
 
-//#define CONFIG_PMKSA_CACHING
+#define CONFIG_PMKSA_CACHING
 
 /* For WPA3 */
-//#define CONFIG_IEEE80211W
-//#define CONFIG_SAE_SUPPORT
+#define CONFIG_IEEE80211W
+#define CONFIG_SAE_SUPPORT
 #ifdef CONFIG_SAE_SUPPORT
 #define CONFIG_SAE_DH_SUPPORT 1
-//#define ALL_DH_GROUPS
+#define ALL_DH_GROUPS
 #endif
 
 
@@ -269,16 +269,20 @@
   #if defined(CONFIG_PLATFORM_8195A) || defined(CONFIG_PLATFORM_8195BHP) || defined(CONFIG_PLATFORM_8710C)
     #define CONFIG_RUNTIME_PORT_SWITCH
   #endif
-  #define NET_IF_NUM ((CONFIG_ETHERNET) + (CONFIG_WLAN) + 1)
+  #ifdef CONFIG_BRIDGE
+    #define NET_IF_NUM ((CONFIG_ETHERNET) + (CONFIG_BRIDGE) + (CONFIG_WLAN) + 1)
+  #else
+    #define NET_IF_NUM ((CONFIG_ETHERNET) + (CONFIG_WLAN) + 1)
+  #endif
 #else
   #define NET_IF_NUM ((CONFIG_ETHERNET) + (CONFIG_WLAN))
 #endif
 
 
 /****************** For EAP auth configurations *******************/
-#define CONFIG_TLS	0
-#define CONFIG_PEAP	0
-#define CONFIG_TTLS	0
+#define CONFIG_TLS	1
+#define CONFIG_PEAP	1
+#define CONFIG_TTLS	1
 
 // DO NOT change the below config of EAP
 #ifdef PRE_CONFIG_EAP
@@ -496,6 +500,11 @@ extern unsigned int g_ap_sta_num;
 		#ifndef CONFIG_RTL8721D 
 			#define CONFIG_RTL8721D
 		#endif
+		#ifdef CONFIG_PLATFORM_TIZENRT_OS
+		#undef RX_AGGREGATION
+		#define RX_AGGREGATION 1
+		#undef NOT_SUPPORT_40M
+		#endif
 		#undef NOT_SUPPORT_5G
 		#undef CONFIG_ADAPTOR_INFO_CACHING_FLASH
 		#define CONFIG_ADAPTOR_INFO_CACHING_FLASH 0
@@ -526,6 +535,8 @@ extern unsigned int g_ap_sta_num;
 			#undef CONFIG_CONCURRENT_MODE
 			#undef CONFIG_AUTO_RECONNECT
 		#endif
+	#define CONFIG_WLAN_SWITCH_MODE         //save memory while switching mode without driver re-init
+	//#define LOW_POWER_WIFI_CONNECT
 	#endif
 	#if defined(CONFIG_PLATFORM_8195BHP)
 		#define CONFIG_RTL8195B
@@ -638,6 +649,7 @@ extern unsigned int g_ap_sta_num;
 		#if defined(CONFIG_MAC_LOOPBACK_DRIVER_RTL8710C) && (CONFIG_MAC_LOOPBACK_DRIVER_RTL8710C == 3)
 		#define CONFIG_MAC_LOOPBACK_DRIVER_AMEBA
 		#endif
+		#define CONFIG_WLAN_SWITCH_MODE         //save memory while switching mode without driver re-init
 	#endif
 #elif defined(CONFIG_HARDWARE_8188F)
 #define CONFIG_RTL8188F
@@ -748,7 +760,11 @@ extern unsigned int g_ap_sta_num;
 #ifdef CONFIG_HIGH_TP_TEST
 	#define SKB_PRE_ALLOCATE_RX	1
 #else
+#ifdef CONFIG_PLATFORM_TIZENRT_OS
+	#define SKB_PRE_ALLOCATE_RX	1
+#else
 	#define SKB_PRE_ALLOCATE_RX	0
+#endif
 #endif
 
 #if (!defined(CONFIG_PLATFORM_8721D))
@@ -761,7 +777,11 @@ extern unsigned int g_ap_sta_num;
 	#ifdef CONFIG_HIGH_TP_TEST
 		#define EXCHANGE_LXBUS_RX_SKB 1
 	#else
+#ifdef CONFIG_PLATFORM_TIZENRT_OS
+		#define EXCHANGE_LXBUS_RX_SKB 1
+#else
 		#define EXCHANGE_LXBUS_RX_SKB 0
+#endif
 	#endif
 #endif
 #if (defined(CONFIG_FPGA) && !defined(CONFIG_PLATFORM_8710C))\

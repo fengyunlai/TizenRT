@@ -862,7 +862,7 @@ int8_t cmd_wifi_on(WiFi_InterFace_ID_t interface_id)
 
 	/* Kill init thread after all init tasks done */
 	ret = wifi_on(RTW_MODE_STA);
-	if (ret != RTW_SUCCESS) {
+	if (ret < 0) {
 		ndbg("\n\rrtk_wifi_start failed\n");
 		return RTK_STATUS_ERROR;
 	}

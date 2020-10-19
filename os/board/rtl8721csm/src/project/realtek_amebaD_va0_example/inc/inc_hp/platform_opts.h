@@ -17,7 +17,7 @@
 /**
  * For AT cmd Log service configurations
  */
-#define SUPPORT_LOG_SERVICE	0
+#define SUPPORT_LOG_SERVICE	1
 #if SUPPORT_LOG_SERVICE
 #define LOG_SERVICE_BUFLEN     100 //can't larger than UART_LOG_CMD_BUFLEN(127)
 #define CONFIG_LOG_HISTORY	0
@@ -77,7 +77,7 @@
 #define CONFIG_SSL_CLIENT	0
 #define CONFIG_WEBSERVER	0
 #define CONFIG_OTA_UPDATE	0
-#define CONFIG_BSD_TCP		0//NOTE : Enable CONFIG_BSD_TCP will increase about 11KB code size
+#define CONFIG_BSD_TCP		1//NOTE : Enable CONFIG_BSD_TCP will increase about 11KB code size
 #define CONFIG_AIRKISS		0//on or off tencent airkiss
 #define CONFIG_UART_SOCKET	0
 #define CONFIG_JOYLINK			0//on or off for jdsmart or joylink
@@ -132,6 +132,8 @@
 #endif
 
 #define CONFIG_JOINLINK    0
+
+#define CONFIG_EXAMPLE_CM_BACKTRACE 1
 
 #endif //end of #if CONFIG_WLAN
 /*******************************************************************************/

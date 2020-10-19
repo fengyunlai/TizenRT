@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2013-2016, Realtek Semiconductor Corp.
+ * Copyright (c) 2013-2016 Realtek Semiconductor Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1019,7 +1019,6 @@ void rtw_wakeup_task(struct task_struct *task);
 void rtw_set_priority_task(void* task, u32 NewPriority );
 
 int rtw_get_priority_task(void* task);
-
 void rtw_suspend_task (void* task);
 
 void rtw_resume_task (void* task);
@@ -1040,6 +1039,13 @@ int rtw_create_worker_thread( rtw_worker_thread_t* worker_thread, u8 priority, u
  * @return  SUCCESS/FAIL.
  */
 int rtw_delete_worker_thread( rtw_worker_thread_t* worker_thread );
+
+#if 0 //TODO
+void	rtw_init_delayed_work(struct delayed_work *dwork, work_func_t func, const char *name);
+void	rtw_deinit_delayed_work(struct delayed_work *dwork);
+int		rtw_queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dwork, u32 delay, void* context);
+BOOLEAN rtw_cancel_delayed_work(struct delayed_work *dwork);
+#endif
 
 /**
  * @brief  This function prints the name of the thread in DBG_INFO.
@@ -1381,10 +1387,17 @@ struct osdep_service_ops {
 	int (*rtw_create_task)(struct task_struct *task, const char *name, u32 stack_size, u32 priority, thread_func_t func, void *thctx);
 	void (*rtw_delete_task)(struct task_struct *task);
 	void (*rtw_wakeup_task)(struct task_struct *task);
-	void (*rtw_set_priority_task)(void* task, u32 NewPriority);
+	void (*rtw_set_priority_task)(void* task, u32 NewPriority);	
 	int (*rtw_get_priority_task)(void* task);
 	void (*rtw_suspend_task)(void *task);
 	void (*rtw_resume_task)(void *task);
+	
+#if 0	//TODO
+	void (*rtw_init_delayed_work)(struct delayed_work *dwork, work_func_t func, const char *name);
+	void (*rtw_deinit_delayed_work)(struct delayed_work *dwork);
+	int (*rtw_queue_delayed_work)(struct workqueue_struct *wq, struct delayed_work *dwork, unsigned long delay, void* context);
+	BOOLEAN (*rtw_cancel_delayed_work)(struct delayed_work *dwork);
+#endif	
 	void (*rtw_thread_enter)(char *name);
 	void (*rtw_thread_exit)(void);
 	_timerHandle (*rtw_timerCreate)( const signed char *pcTimerName, 

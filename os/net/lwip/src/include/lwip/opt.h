@@ -118,7 +118,7 @@
  * one included in your C library
  */
 #ifndef MEMCPY
-#define MEMCPY(dst, src, len)             memcpy(dst, src, len)
+#define MEMCPY(dst, src, len)             memcpy_gdma(dst, src, len)
 #endif
 
 /**

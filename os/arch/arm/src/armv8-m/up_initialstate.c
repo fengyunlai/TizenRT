@@ -159,7 +159,7 @@ void up_initial_state(struct tcb_s *tcb)
 	 * mode before transferring control to the user task.
 	 */
 
-#ifdef CONFIG_ARMV8M_TRUSTZONE
+#if 1//def CONFIG_ARMV8M_TRUSTZONE
 	xcp->regs[REG_EXC_RETURN] = 0xFFFFFFB8;
 #else
 	xcp->regs[REG_EXC_RETURN] = EXC_RETURN_PRIVTHR;
