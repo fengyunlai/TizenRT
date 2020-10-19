@@ -4,7 +4,7 @@
 #if !defined(CONFIG_PLATFOMR_CUSTOMER_RTOS)
 #include "main.h"
 #endif
-#include <lwip_netconf.h>
+#include <rtk_lwip_netconf.h>
 #include <lwip/sockets.h>
 #include <dhcp/dhcps.h>
 #include "lwip/tcpip.h"

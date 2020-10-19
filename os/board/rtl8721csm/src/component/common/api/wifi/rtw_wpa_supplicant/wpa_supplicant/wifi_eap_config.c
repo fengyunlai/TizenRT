@@ -1,6 +1,6 @@
 #if !defined(CONFIG_MBED_ENABLED)
 #include "main.h"
-#include <lwip_netconf.h>
+#include <rtk_lwip_netconf.h>
 #include <lwip/netif.h>
 #endif
 #include <stdio.h>

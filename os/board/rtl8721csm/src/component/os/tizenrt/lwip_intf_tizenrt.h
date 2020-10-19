@@ -22,7 +22,6 @@ extern "C" {
 #endif
 
 #include "platform_opts.h"
-#include <wireless.h>
 #include <skbuff.h>
 
 struct netif;

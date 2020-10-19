@@ -65,7 +65,11 @@
  */
 #define CONFIG_WLAN	1
 #if CONFIG_WLAN
+#if CONFIG_NET_NETMGR
+#define CONFIG_LWIP_LAYER	0
+#else
 #define CONFIG_LWIP_LAYER	1
+#endif
 #define CONFIG_INIT_NET		0 //init lwip layer when start up
 #define CONFIG_WIFI_IND_USE_THREAD	0	// wifi indicate worker thread
 
@@ -138,7 +142,11 @@
 #define CONFIG_ETHERNET 0
 #if CONFIG_ETHERNET
 
+#if CONFIG_NET_NETMGR
+#define CONFIG_LWIP_LAYER	0
+#else
 #define CONFIG_LWIP_LAYER	1
+#endif
 #define CONFIG_INIT_NET         1 //init lwip layer when start up
 
 //on/off relative commands in log service

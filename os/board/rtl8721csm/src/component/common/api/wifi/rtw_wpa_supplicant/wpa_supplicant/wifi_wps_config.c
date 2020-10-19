@@ -6,7 +6,7 @@
 #include "main.h"
 #include "queue.h"
 #include "utils/os.h"
-#include <lwip_netconf.h>
+#include <rtk_lwip_netconf.h>
 #include <lwip/netif.h>
 #include "wifi/wifi_conf.h"
 #include "wps/wps_defs.h"

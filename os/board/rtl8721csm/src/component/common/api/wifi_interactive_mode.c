@@ -840,6 +840,7 @@ void cmd_wifi_info(int argc, char **argv)
 #endif
 }
 
+#if CONFIG_LWIP_LAYER
 /*
  * Wi-Fi driver doesn't need to set mac address because
  * Wi-Fi manager does it.
@@ -853,6 +854,7 @@ static void _netlib_setmacaddr(const char *ifname, const uint8_t *macaddr)
 		memcpy(dev->d_mac.ether_addr_octet, macaddr, IFHWADDRLEN);
 	}
 }
+#endif
 
 int8_t cmd_wifi_on(WiFi_InterFace_ID_t interface_id)
 {

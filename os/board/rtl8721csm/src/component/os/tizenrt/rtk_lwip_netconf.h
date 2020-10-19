@@ -25,25 +25,20 @@ extern "C" {
 #include "lwip/tcpip.h"
 #include "lwip/init.h" //for lwip version control
 /* Includes ------------------------------------------------------------------*/
-//#include <platform/platform_stdlib.h>
-//#include "platform_opts.h"
-//#include "autoconf.h"
+#include <platform/platform_stdlib.h>
+#include "platform_opts.h"
+#include "autoconf.h"
 
 #include "lwip/err.h"
 // macros
 /* Give default value if not defined */
-
-#if 0
-#define CONFIG_WLAN 1
-
 #ifndef NET_IF_NUM
-#ifdef CONFIG_CONCURRENT_MODE
-#define NET_IF_NUM ((CONFIG_WLAN) + 1)
-#else
-#define NET_IF_NUM (CONFIG_WLAN)
-#endif // end of CONFIG_CONCURRENT_MODE
+  #ifdef CONFIG_CONCURRENT_MODE
+    #define NET_IF_NUM ((CONFIG_ETHERNET) + (CONFIG_WLAN) + 1)
+  #else
+    #define NET_IF_NUM ((CONFIG_ETHERNET) + (CONFIG_WLAN))
+  #endif  // end of CONFIG_CONCURRENT_MODE
 #endif // end of NET_IF_NUM
-#endif
 
 /* Private typedef -----------------------------------------------------------*/
 typedef enum {
@@ -68,6 +63,7 @@ err_t dhcp_release_unicast(struct netif *netif);
 int LwIP_Is_Init(void);
 void LwIP_Init_If(void);
 void LwIP_ReleaseIP(uint8_t idx);
+uint8_t LwIP_DHCP(uint8_t idx, uint8_t dhcp_state);
 unsigned char *LwIP_GetMAC(struct netif *pnetif);
 unsigned char *LwIP_GetIP(struct netif *pnetif);
 unsigned char *LwIP_GetGW(struct netif *pnetif);
