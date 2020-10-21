@@ -261,6 +261,8 @@ int netif_is_valid_IP(int idx, unsigned char *ip_dest)
 		return 1;
 
 	DBG_TRACE("invalid IP: %d.%d.%d.%d ", ip_dest[0], ip_dest[1], ip_dest[2], ip_dest[3]);
+#else
+	return 1;//For net manager, always Valid
 #endif
 #ifdef CONFIG_DONT_CARE_TP
 	if (pnetif->flags & NETIF_FLAG_IPSWITCH)
