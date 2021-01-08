@@ -85,6 +85,7 @@ include component/common/api/wifi/Make.defs
 include component/common/api/wifi/rtw_wpa_supplicant/wpa_supplicant/Make.defs
 include component/common/api/Make.defs
 include component/common/api/network/src/Make.defs
+include component/common/network/dhcp/Make.defs
 include component/os/os_dep/Make.defs
 include component/os/tizenrt/Make.defs
 include component/soc/realtek/amebad/misc/Make.defs

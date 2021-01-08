@@ -4,7 +4,9 @@
 #if !defined(CONFIG_PLATFOMR_CUSTOMER_RTOS)
 #include "main.h"
 #endif
+#include <lwip_netconf.h>
 #include <lwip/sockets.h>
+#include <dhcp/dhcps.h>
 #include "lwip/tcpip.h"
 #endif
 #include <platform/platform_stdlib.h>
@@ -57,6 +59,10 @@ extern u8 rtw_get_band_type(void);
 /******************************************************
  *               Variables Declarations
  ******************************************************/
+
+#if !defined(CONFIG_MBED_ENABLED)
+extern struct netif xnetif[NET_IF_NUM];
+#endif
 
 /******************************************************
  *               Variables Definitions
@@ -397,6 +403,14 @@ static void wifi_disconn_hdl( char* buf, int buf_len, int flags, void* userdata)
 			error_flag = RTW_UNKNOWN;
 	}
 	
+#if CONFIG_LWIP_LAYER
+#if defined(CONFIG_MBED_ENABLED)
+	//TODO
+#else
+	dhcp_stop(&xnetif[0]);
+#endif
+#endif
+
 	if(join_user_data != NULL) {
 		rtw_up_sema(&join_user_data->join_sema);
 	} else {
@@ -757,6 +771,13 @@ int wifi_connect(
 	}
 
 	result = RTW_SUCCESS;
+#if CONFIG_LWIP_LAYER
+#if defined(CONFIG_MBED_ENABLED)
+	//TODO
+#else
+	netif_set_link_up(&xnetif[0]);
+#endif
+#endif
 
 #if CONFIG_EXAMPLE_WLAN_FAST_CONNECT || (defined(CONFIG_JD_SMART) && CONFIG_JD_SMART)
 	restore_wifi_info_to_flash();
@@ -917,6 +938,14 @@ int wifi_connect_bssid(
 	}
 
 	result = RTW_SUCCESS;
+	
+#if CONFIG_LWIP_LAYER
+#if defined(CONFIG_MBED_ENABLED)
+	//TODO
+#else
+	netif_set_link_up(&xnetif[0]);
+#endif
+#endif
 
 #if CONFIG_EXAMPLE_WLAN_FAST_CONNECT || (defined(CONFIG_JD_SMART) && CONFIG_JD_SMART)
 	restore_wifi_info_to_flash();
@@ -1343,6 +1372,20 @@ int wifi_on(rtw_mode_t mode)
 		rtw_msleep_os(1000);
 		timeout --;
 	}
+
+	#if CONFIG_LWIP_LAYER
+	#if defined(CONFIG_MBED_ENABLED)
+	//TODO
+	#else
+	netif_set_up(&xnetif[0]);
+	if(mode == RTW_MODE_AP) 
+		netif_set_link_up(&xnetif[0]);
+	else	 if(mode == RTW_MODE_STA_AP) {
+		netif_set_up(&xnetif[1]);		
+		netif_set_link_up(&xnetif[1]);
+	}
+	#endif
+	#endif
 	
 #if CONFIG_INIC_EN
 	inic_start();
@@ -1361,7 +1404,16 @@ int wifi_off(void)
 		RTW_API_INFO("\n\rWIFI is not running");
 		return 0;
 	}
-
+#if CONFIG_LWIP_LAYER
+#if defined(CONFIG_MBED_ENABLED)
+	//TODO
+#else
+	dhcps_deinit();
+	LwIP_DHCP(0, DHCP_STOP);
+	netif_set_down(&xnetif[0]);
+	netif_set_down(&xnetif[1]);
+#endif
+#endif
 #if defined(CONFIG_ENABLE_WPS_AP) && CONFIG_ENABLE_WPS_AP
 	if((wifi_mode ==  RTW_MODE_AP) || (wifi_mode == RTW_MODE_STA_AP))
 		wpas_wps_deinit();
@@ -1403,6 +1455,14 @@ int wifi_off(void)
 
 int wifi_off_fastly(void)
 {
+#if CONFIG_LWIP_LAYER
+#if defined(CONFIG_MBED_ENABLED)
+	//TODO
+#else
+	dhcps_deinit();
+	LwIP_DHCP(0, DHCP_STOP);
+#endif	
+#endif	
 	//RTW_API_INFO("\n\rDeinitializing WIFI ...");
 	device_mutex_lock(RT_DEV_LOCK_WLAN);
 	rltk_wlan_deinit_fastly();
@@ -1453,6 +1513,10 @@ int wifi_set_mode(rtw_mode_t mode)
 		//must add this delay, because this API may have higher priority, wifi_disconnect will rely RTW_CMD task, may not be excuted immediately.	
 		rtw_msleep_os(50);	
 
+#if CONFIG_LWIP_LAYER	
+		netif_set_link_up(&xnetif[0]);	
+#endif	
+
 		wifi_mode = mode;
 	}else if((wifi_mode == RTW_MODE_AP) && (mode ==RTW_MODE_STA)){
 		RTW_API_INFO("\n\r[%s] WIFI Mode Change: AP-->STA",__FUNCTION__);
@@ -1461,6 +1525,10 @@ int wifi_set_mode(rtw_mode_t mode)
 		if(ret < 0) goto Exit;
 
 		rtw_msleep_os(50);	
+		
+#if CONFIG_LWIP_LAYER			
+		netif_set_link_down(&xnetif[0]);	
+#endif	
 
 		wifi_mode = mode;
 
@@ -1482,7 +1550,10 @@ int wifi_set_mode(rtw_mode_t mode)
 		RTW_API_INFO("\n\rWIFI Mode Change: AP-->PROMISC");//Same as AP--> STA
 		ret = wext_set_mode(WLAN0_NAME, IW_MODE_INFRA);
 		if(ret < 0) goto Exit;
-		rtw_msleep_os(50);	
+		rtw_msleep_os(50);
+#if CONFIG_LWIP_LAYER			
+		netif_set_link_down(&xnetif[0]);	
+#endif		
 		wifi_mode = mode;
 	}else{
 		RTW_API_INFO("\n\rWIFI Mode Change: not support");
@@ -1690,6 +1761,16 @@ int wifi_start_ap(
 #if defined(CONFIG_ENABLE_WPS_AP) && CONFIG_ENABLE_WPS_AP
 	wpas_wps_init(ifname);
 #endif	
+#if CONFIG_LWIP_LAYER
+#if defined(CONFIG_MBED_ENABLED)
+	//TODO
+#else
+	if(wifi_mode == RTW_MODE_STA_AP)
+		netif_set_link_up(&xnetif[1]);
+	else
+		netif_set_link_up(&xnetif[0]);
+#endif
+#endif
 exit:
 #endif
 	return ret;
@@ -2392,7 +2473,16 @@ int wifi_restart_ap(
 {
 #if defined (CONFIG_AP_MODE) && defined (CONFIG_NATIVEAP_MLME)
 	unsigned char idx = 0;
-
+#if CONFIG_LWIP_LAYER
+#if defined(CONFIG_MBED_ENABLED)
+	//TODO
+#else
+	ip_addr_t ipaddr;
+	ip_addr_t netmask;
+	ip_addr_t gw;
+	struct netif * pnetif = &xnetif[0];
+#endif
+#endif
 #ifdef  CONFIG_CONCURRENT_MODE
 	rtw_wifi_setting_t setting;
 	int sta_linked = 0;
@@ -2401,6 +2491,15 @@ int wifi_restart_ap(
 	if(rltk_wlan_running(WLAN1_IDX)){
 		idx = 1;
 	}
+
+	// stop dhcp server
+#if CONFIG_LWIP_LAYER
+#if defined(CONFIG_MBED_ENABLED)
+	//TODO
+#else
+	dhcps_deinit();
+#endif
+#endif
 
 #ifdef  CONFIG_CONCURRENT_MODE
 	if(idx > 0){
@@ -2412,6 +2511,23 @@ int wifi_restart_ap(
 	else
 #endif
 	{
+#if CONFIG_LWIP_LAYER	
+#if defined(CONFIG_MBED_ENABLED)
+		//TODO
+#else
+#if LWIP_VERSION_MAJOR >= 2
+		IP4_ADDR(ip_2_ip4(&ipaddr), GW_ADDR0, GW_ADDR1, GW_ADDR2, GW_ADDR3);
+		IP4_ADDR(ip_2_ip4(&netmask), NETMASK_ADDR0, NETMASK_ADDR1 , NETMASK_ADDR2, NETMASK_ADDR3);
+		IP4_ADDR(ip_2_ip4(&gw), GW_ADDR0, GW_ADDR1, GW_ADDR2, GW_ADDR3);
+		netif_set_addr(pnetif, ip_2_ip4(&ipaddr), ip_2_ip4(&netmask),ip_2_ip4(&gw));
+#else
+		IP4_ADDR(&ipaddr, GW_ADDR0, GW_ADDR1, GW_ADDR2, GW_ADDR3);
+		IP4_ADDR(&netmask, NETMASK_ADDR0, NETMASK_ADDR1 , NETMASK_ADDR2, NETMASK_ADDR3);
+		IP4_ADDR(&gw, GW_ADDR0, GW_ADDR1, GW_ADDR2, GW_ADDR3);
+		netif_set_addr(pnetif, &ipaddr, &netmask,&gw);
+#endif
+#endif
+#endif
 		wifi_off();
 		rtw_msleep_os(20);
 		wifi_on(RTW_MODE_AP);			
@@ -2457,6 +2573,14 @@ int wifi_restart_ap(
 	RTW_API_INFO("\r\nWebServer Thread: High Water Mark is %ld\n", uxTaskGetStackHighWaterMark(NULL));
 #endif
 #endif
+#if CONFIG_LWIP_LAYER
+#if defined(CONFIG_MBED_ENABLED)
+	//TODO
+#else
+	// start dhcp server
+	dhcps_init(&xnetif[idx]);
+#endif
+#endif
 #endif
 	return 0;
 }
@@ -2492,6 +2616,28 @@ static void wifi_autoreconnect_thread(void *param)
 	RTW_API_INFO("\n\rauto reconnect ...\n");
 	ret = wifi_connect(reconnect_param->ssid, reconnect_param->security_type, reconnect_param->password,
 	                   reconnect_param->ssid_len, reconnect_param->password_len, reconnect_param->key_id, NULL);
+#if CONFIG_LWIP_LAYER
+	if(ret == RTW_SUCCESS) {
+#if ATCMD_VER == ATVER_2
+		if (dhcp_mode_sta == 2){
+			struct netif * pnetif = &xnetif[0];
+			LwIP_UseStaticIP(pnetif);
+			dhcps_init(pnetif);
+		}
+		else
+#endif
+		{
+			LwIP_DHCP(0, DHCP_START);
+#if LWIP_AUTOIP
+			uint8_t *ip = LwIP_GetIP(&xnetif[0]);
+			if((ip[0] == 0) && (ip[1] == 0) && (ip[2] == 0) && (ip[3] == 0)) {
+				RTW_API_INFO("\n\nIPv4 AUTOIP ...");
+				LwIP_AUTOIP(&xnetif[0]);
+			}
+#endif
+		}
+	}
+#endif //#if CONFIG_LWIP_LAYER
 	rtw_free(param);
 	param = NULL;
 	param_indicator = NULL;
