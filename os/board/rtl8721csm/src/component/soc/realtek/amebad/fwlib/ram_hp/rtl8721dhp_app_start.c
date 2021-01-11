@@ -76,6 +76,7 @@ void os_heap_init(void){
 		}
 	}
 #endif
+DiagPrintf("\n\rkregionx_size[0]: %x\n\r\n\r", kregionx_size[0]);
 }
 #define dbg_printf DiagPrintf
 typedef struct fault_handler_back_trace_s {

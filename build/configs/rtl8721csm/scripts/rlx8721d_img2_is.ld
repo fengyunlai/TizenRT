@@ -187,6 +187,9 @@ SECTIONS
 		/**fs_read.o (.text*)
 		*fs_select.o (.text*)
 		*fs_poll.o (.text*)*/
+		/*netmgr*/
+		*netdev_mgr.o (.text*)
+		*netdev_lwip.o (.text*)
 		/*others*/
 		*lib_vikmemcpy.o (.text*)
 		*dq_rem.o (.text*)

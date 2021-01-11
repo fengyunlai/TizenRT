@@ -160,6 +160,10 @@ FAR void *kmm_malloc(size_t size)
 #else
 	size_t retaddr = 0;
 #endif
-	return kheap_malloc(size, retaddr);
+int ret;
+	ret = kheap_malloc(size, retaddr);
+	DiagPrintf("malloc size: 0x%x, addr: 0x%x\r\n", size, ret);
+	return ret;
+	//return kheap_malloc(size, retaddr);
 }
 #endif							/* CONFIG_MM_KERNEL_HEAP */

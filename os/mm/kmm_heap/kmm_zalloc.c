@@ -126,6 +126,7 @@ FAR void *kmm_zalloc(size_t size)
 #else
 		ret = mm_zalloc(&kheap[kheap_idx], size);
 #endif
+	DiagPrintf("zalloc size: 0x%x, addr: 0x%x\r\n", size, ret);
 		if (ret != NULL) {
 			return ret;
 		}

@@ -137,7 +137,11 @@ FAR void *kmm_calloc(size_t n, size_t elem_size)
 #else
 	size_t retaddr = 0;
 #endif
-	return kheap_calloc(n, elem_size, retaddr);
+int ret;
+	ret = kheap_calloc(n, elem_size, retaddr);
+	DiagPrintf("calloc size: 0x%x, addr: 0x%x\r\n", elem_size, ret);
+	return ret;
+	//return kheap_calloc(n, elem_size, retaddr);
 }
 
 #endif							/* CONFIG_MM_KERNEL_HEAP */
