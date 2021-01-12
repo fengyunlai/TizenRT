@@ -216,7 +216,7 @@ static int _wifi_utils_callback_handler(int argc, char *argv[])
  */
 void lwnl_start_monitor(void)
 {
-	int tid = task_create("lwnl8021 cb handler", 110, 4096, (main_t)_wifi_utils_callback_handler, NULL);
+	int tid = task_create("lwnl8021 cb handler", 110, 2048, (main_t)_wifi_utils_callback_handler, NULL);
 	if (tid < 0) {
 		WM_ERR;
 	}

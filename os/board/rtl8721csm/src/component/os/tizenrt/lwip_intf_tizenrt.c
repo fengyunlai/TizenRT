@@ -265,6 +265,7 @@ void netif_rx(int idx, unsigned int len)
 	dev_tmp = rtk_get_netdev(idx);
 
 	netdev_input(dev_tmp, skb->data, skb->len);
+	//lwip_input(dev_tmp, skb->data, skb->len);
 
 #if (CONFIG_INIC_EN == 1)
 	inic_netif_rx(idx, len);

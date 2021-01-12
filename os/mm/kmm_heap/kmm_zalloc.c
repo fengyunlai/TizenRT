@@ -80,6 +80,14 @@
  *   The address of the allocated memory (NULL on failure to allocate)
  *
  ************************************************************************/
+
+//#define __NOP()    __ASM volatile ("nop")
+
+void __NOP(void)
+{
+  __asm volatile ("nop");
+}
+
 #if CONFIG_KMM_NHEAPS > 1
 void *kmm_zalloc_at(int heap_index, size_t size)
 {
@@ -94,8 +102,11 @@ void *kmm_zalloc_at(int heap_index, size_t size)
 	ARCH_GET_RET_ADDRESS
 	return mm_zalloc(&kheap[heap_index], size, retaddr);
 #else
-	return mm_zalloc(&kheap[heap_index], size);
+int ret;
+	ret = mm_zalloc(&kheap[heap_index], size);
 #endif
+//DiagPrintf("kmm_zalloc_at size: 0x%x, addr: 0x%x\r\n", size, ret);
+return ret;
 }
 #endif
 
@@ -112,6 +123,25 @@ void *kmm_zalloc_at(int heap_index, size_t size)
  *   The address of the allocated memory (NULL on failure to allocate)
  *
  ************************************************************************/
+//__attribute__((used)) 
+int g_debug_flag = 1;
+
+//void __enable_irq(void)
+//{
+//  __asm volatile ("cpsie i" : : : "memory");
+//}
+
+void feng_debug(void)
+{
+  //__asm volatile("bkpt 0");
+  DiagPrintf("feng\n");
+//__NOP();
+}
+
+//void __disable_irq(void)
+//{
+//  __asm volatile ("cpsid i" : : : "memory");
+//}
 
 FAR void *kmm_zalloc(size_t size)
 {
@@ -126,7 +156,18 @@ FAR void *kmm_zalloc(size_t size)
 #else
 		ret = mm_zalloc(&kheap[kheap_idx], size);
 #endif
-	DiagPrintf("zalloc size: 0x%x, addr: 0x%x\r\n", size, ret);
+	//DiagPrintf("zalloc size: 0x%x, addr: 0x%x\r\n", size, ret);
+	//g_debug_flag = ((int)ret & 0x2000000);
+	//if(g_debug_flag)
+	//{
+	//DiagPrintf("zalloc size: 0x%x, addr: 0x%x\r\n", size, ret);
+	//save_and_cli();
+	//__disable_irq();
+	//feng_debug();//__NOP();__NOP();__NOP();
+	//restore_flags();
+	//}
+	//restore_flags();
+	//__enable_irq();
 		if (ret != NULL) {
 			return ret;
 		}

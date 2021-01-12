@@ -1243,7 +1243,7 @@ int wm_test_main(int argc, char *argv[])
 	if (res < 0) {
 		return -1;
 	}
-	task_create("wifi test sample", 100, 1024 * 10, (main_t)wm_process, argv);
+	task_create("wifi test sample", 100, 1024 * 2, (main_t)wm_process, argv);
 
 	WM_TEST_FUNC_WAIT;
 

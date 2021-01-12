@@ -713,6 +713,7 @@ err_exit:
 	char str_func_addr[9];
 	char str_ctx_addr[9];
 	char *task_info[3];
+	DiagPrintf("name:%s\n",name);
 	priority = SCHED_PRIORITY_DEFAULT + priority;
 	priority = (priority > SCHED_PRIORITY_MAX || priority < SCHED_PRIORITY_MIN)?SCHED_PRIORITY_DEFAULT:priority;
 	if(strncmp(name, "rtw_interrupt_thread", strlen("rtw_interrupt_thread") + 1) == 0) priority = 106;
@@ -734,6 +735,7 @@ err_exit:
 	}
 	ptask->task = pid;
 	ptask->task_name = name;
+	DiagPrintf("name:%s\n",name);
 	return _SUCCESS;
 #endif
 }

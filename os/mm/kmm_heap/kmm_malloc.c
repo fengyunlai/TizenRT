@@ -134,8 +134,11 @@ void *kmm_malloc_at(int heap_index, size_t size)
 	ARCH_GET_RET_ADDRESS
 	return mm_malloc(&kheap[heap_index], size, retaddr);
 #else
-	return mm_malloc(&kheap[heap_index], size);
+int ret;
+	ret = mm_malloc(&kheap[heap_index], size);
 #endif
+//DiagPrintf("kmm_malloc_at size: 0x%x, addr: 0x%x\r\n", size, ret);
+return ret;
 }
 #endif
 
@@ -162,7 +165,7 @@ FAR void *kmm_malloc(size_t size)
 #endif
 int ret;
 	ret = kheap_malloc(size, retaddr);
-	DiagPrintf("malloc size: 0x%x, addr: 0x%x\r\n", size, ret);
+	//DiagPrintf("malloc size: 0x%x, addr: 0x%x\r\n", size, ret);
 	return ret;
 	//return kheap_malloc(size, retaddr);
 }
