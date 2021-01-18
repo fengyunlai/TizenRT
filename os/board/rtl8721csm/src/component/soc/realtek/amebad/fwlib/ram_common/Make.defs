@@ -68,5 +68,7 @@ CSRCS += rtl8721d_i2c.c \
 	 rtl8721d_bor.c \
 	 rtl8721d_ram_libc.c
 
+BOOTCSRCS += rtl8721d_wdg.c
+
 DEPPATH += --dep-path component/soc/realtek/amebad/fwlib/ram_common
 VPATH += :component/soc/realtek/amebad/fwlib/ram_common

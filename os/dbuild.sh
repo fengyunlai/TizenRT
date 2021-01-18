@@ -102,6 +102,7 @@ function SELECT_OPTION()
 			echo "  \"4. Build Clean\""
 			echo "  \"5. Build Dist-Clean\""
 			echo "  \"6. Build SmartFS Image\""
+			echo "  \"7. Build bootloader\""
 			if [ "${STATUS}" == "BUILT" ]; then
 				echo "  \"d. Download\""
 			fi
@@ -131,6 +132,9 @@ function SELECT_OPTION()
 			;;
 		6|smartfs)
 			BUILD smartfs
+			;;
+		7|bootloader)
+			BUILD bootloader
 			;;
 
 		d|download)

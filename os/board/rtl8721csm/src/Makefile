@@ -66,11 +66,16 @@ ifeq ($(CONFIG_BOARD_CRASHDUMP),y)
 CSRCS += crashdump.c
 endif
 
+#ifeq ($(CONFIG_AMEBAD_BOOTLOADER),y)
+#CSRCS += BOOTCSRCS
+#endif
+
 include Make.defs
 include component/soc/realtek/amebad/app/monitor/ram/Make.defs
 include component/soc/realtek/amebad/app/monitor/rom/Make.defs
 include component/soc/realtek/amebad/fwlib/crypto/Make.defs
 include component/soc/realtek/amebad/fwlib/ram_hp/Make.defs
+include component/soc/realtek/amebad/fwlib/ram_lp/Make.defs
 include component/soc/realtek/amebad/fwlib/ram_common/Make.defs
 include component/soc/realtek/amebad/fwlib/usrcfg/Make.defs
 ifeq ($(CONFIG_AMEBAD_WIFI),y)
@@ -93,6 +98,7 @@ endif
 ifeq ($(CONFIG_USBD_MSC),y)
 include component/soc/realtek/amebad/fwlib/usb_otg/device/class/msc/src/Make.defs
 endif
+include component/soc/realtek/amebad/bootloader/Make.defs
 
 ARCH_SRCDIR = 	$(TOPDIR)/arch/$(CONFIG_ARCH)/src/
 BOARD_SRCDIR = 	$(TOPDIR)/board
@@ -137,8 +143,10 @@ CFLAGS += -I$(TOPDIR)/net/lwip/src/include/
 CFLAGS += -I$(DIR_WIFI)/rtw_wpa_supplicant/src
 CFLAGS += -I$(DIR_WIFI)/rtw_wpa_supplicant/wpa_supplicant
 CFLAGS += -I$(COMPONENT_DIR)/soc/realtek/amebad/misc
+CFLAGS += -I$(COMPONENT_DIR)/soc/realtek/amebad/bootloader
 CFALGS += -I$(DIR_CRYPTO)/../include/
 CFLAGS += -I$(DIR_FW)/../include/
+CFLAGS += -I$(COMPONENT_DIR)/soc/realtek/amebad/fwlib/include/
 
 ifeq ($(CONFIG_USBD_MSC),y)
 CFLAGS += -I$(BASEDIR)/component/common/drivers/sdio/realtek/sdio_host/inc
@@ -149,9 +157,18 @@ CFLAGS += -I$(DIR_OTG)/composite/inc
 
 CFLAGS += -DARM_CORE_CM4
 
+
+#ifeq ($(CONFIG_AMEBAD_BOOTLOADER),y)
+#COBJS = $(BOOTCSRCS:.c=$(OBJEXT))
+#SRCS = $(BOOTCSRCS)
+#OBJS = $(AOBJS) $(COBJS)
+#else
 COBJS = $(CSRCS:.c=$(OBJEXT))
 SRCS = $(ASRCS) $(CSRCS)
 OBJS = $(AOBJS) $(COBJS)
+#endif
+BOOTOBJS = $(notdir $(BOOTCSRCS:.c=.o))
+
 
 ifeq ($(WINTOOL),y)
   CFLAGS += -I "${shell cygpath -w $(ARCH_SRCDIR)/chip}"
@@ -171,18 +188,39 @@ endif
 
 all: libboard$(LIBEXT)
 
+#bootloader: $(OBJS)
+#	@echo "FENG bootloader 1"
+#	$(call ARCHIVE, $@, $(OBJS))
+#	@echo "FENG bootloader 2"
+
+bootloader: libboard$(LIBEXT)
+	@echo "FENG bootloader 1"
+	#LDFLAGS -= $(ARCHSCRIPT)
+	#ARCHSCRIPT = -T$(TOPDIR)/../build/configs/$(CONFIG_ARCH_BOARD)/scripts/$(LDBOOTSCRIPT)
+	#LDFLAGS += $(ARCHSCRIPT)
+	@echo "FENG bootloader 2"
+	$(Q) $(CC) $(LDFLAGS) -o target_loader.axf $(BOOTOBJS) 
+	@echo "FENG bootloader 3"
+
 $(AOBJS): %$(OBJEXT): %.S
+	@echo "FENG AOBJS 1"
 	$(call ASSEMBLE, $<, $@)
+	@echo "FENG AOBJS 2"
 
 $(COBJS) $(LINKOBJS): %$(OBJEXT): %.c
+	@echo "FENG COBJS 1"
 	$(call COMPILE, $<, $@)
+	@echo "FENG COBJS 2"
 
 libboard$(LIBEXT): $(OBJS)
 	$(call ARCHIVE, $@, $(OBJS))
 
 .depend: Makefile $(SRCS)
+	@echo "FENG .depend 1"
 	$(Q) $(MKDEP) $(DEPPATH) $(CC) -- $(CFLAGS) -- $(SRCS) >Make.dep
+	@echo "FENG .depend 2"
 	$(Q) touch $@
+	@echo "FENG .depend 3"
 
 depend: .depend
 

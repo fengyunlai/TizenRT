@@ -49,13 +49,11 @@
 #
 ############################################################################
 
-CSRCS += rtl8721dlp_intfcfg.c \
-	 rtl8721dhp_intfcfg.c \
-	 rtl8721d_ipccfg.c \
-	 rtl8721d_wificfg.c \
-	 rtl8721d_bootcfg.c
+CSRCS += boot_flash_lp.c
+CSRCS += boot_ram_lp.c
 
-BOOTCSRCS += rtl8721d_bootcfg.c
+BOOTCSRCS += boot_flash_lp.c
+BOOTCSRCS += boot_ram_lp.c
 
-DEPPATH += --dep-path component/soc/realtek/amebad/fwlib/usrcfg
-VPATH += :component/soc/realtek/amebad/fwlib/usrcfg
+DEPPATH += --dep-path component/soc/realtek/amebad/bootloader
+VPATH += :component/soc/realtek/amebad/bootloader

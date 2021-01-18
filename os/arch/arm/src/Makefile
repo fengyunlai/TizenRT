@@ -114,6 +114,8 @@ COBJS = $(CSRCS:.c=$(OBJEXT))
 
 SRCS = $(ASRCS) $(CSRCS)
 OBJS = $(AOBJS) $(COBJS)
+#BOOTOBJS = $(notdir $(BOOTCSRCS:.c=.o))
+BOOTOBJS = $(BOOTCSRCS:.c=$(OBJEXT))
 
 # User-mode objects
 
@@ -131,6 +133,11 @@ UBIN = libuarch$(LIBEXT)
 BIN  = libarch$(LIBEXT)
 
 LDFLAGS += $(ARCHSCRIPT)
+
+ARCHBOOTSCRIPT = -T$(TOPDIR)/../build/configs/$(CONFIG_ARCH_BOARD)/scripts/$(LDBOOTSCRIPT)
+
+LDBOOTFLAGS += $(ARCHBOOTSCRIPT)
+
 
 # Override in Make.defs if linker is not 'ld'
 
@@ -197,13 +204,26 @@ board$(DELIM)libboard$(LIBEXT):
 
 $(OUTBIN_DIR)/tinyara$(EXEEXT): $(HEAD_OBJ) board/libboard$(LIBEXT)
 	$(Q) echo "LD: tinyara"
+	read aaa
 	$(Q) $(LD) --entry=__start $(LDFLAGS) $(LIBPATHS) $(EXTRA_LIBPATHS) \
 		-o $(TINYARA) $(HEAD_OBJ) $(EXTRA_OBJS) \
 		--start-group $(LDLIBS) $(EXTRA_LIBS) $(LIBGCC) --end-group -Map $(TOPDIR)/../build/output/bin/tinyara.map
+	read aab
+	$(Q) echo $(BOOTOBJS)
+	read aaba
+	$(Q) echo $(LDBOOTFLAGS)
+	read aabb
+
+	#$(Q) $(CC) $(LDBOOTFLAGS) $(BOOTOBJS) -o $(TOPDIR)/../build/output/bin/target_loader.axf 
+
+	#cp $BINDIR/tinyara.axf $BINDIR/target_loader.axf
+
+
 ifneq ($(CONFIG_WINDOWS_NATIVE),y)
 	$(Q) $(NM) $(TINYARA) | \
 	grep -v '\(compiled\)\|\(\$(OBJEXT)$$\)\|\( [aUw] \)\|\(\.\.ng$$\)\|\(LASH[RL]DI\)' | \
 	sort > $(TOPDIR)/$(OUTBIN_DIR)/System.map
+	read aac
 endif
 
 # This is part of the top-level export target
